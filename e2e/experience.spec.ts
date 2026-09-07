@@ -10,7 +10,11 @@ test.beforeEach(async ({ context }) => {
 test("super_adminの常設チャットで選択肢・追従・入力消去・会話保持",async({page},testInfo)=>{
   await page.route("**/api/chatbot/preview",async(route)=>{
     const body=route.request().postDataJSON();
-    await route.fulfill({json:body.choiceId?{answer:"選択された回答です。"}:{answer:"どれについて知りたいですか？",source:"内部ファイル",choices:[{id:"10000000-0000-4000-8000-000000000001",label:"1",title:"非常に長い候補タイトルでも画面からはみ出さずに選択できることを確認する質問です"}]}});
+    await route.fulfill({json:body.choiceId?{answer:"選択された回答です。"}:{answer:"どれについて知りたいですか？",source:"内部ファイル",choices:[
+      {id:"10000000-0000-4000-8000-000000000001",label:"1",title:"非常に長い候補タイトルでも画面からはみ出さずに選択できることを確認する質問です"},
+      {id:"10000000-0000-4000-8000-000000000002",label:"2",title:"参加条件について"},
+      {id:"10000000-0000-4000-8000-000000000003",label:"3",title:"活動日について"},
+    ]}});
   });
   await page.goto("/admin/faqs");
   await page.getByRole("button",{name:"チャットを開く"}).click();
@@ -20,8 +24,12 @@ test("super_adminの常設チャットで選択肢・追従・入力消去・会
   await expect(input).toHaveValue("");
   const choice=dialog.getByRole("button",{name:/非常に長い候補/});
   await expect(choice).toBeVisible();
+  const other=dialog.getByRole("button",{name:/4.*その他/});
+  await expect(other).toBeVisible();
   const box=await choice.boundingBox(), bounds=await dialog.boundingBox();
   expect(box!.x+box!.width).toBeLessThanOrEqual(bounds!.x+bounds!.width);
+  const otherBox=await other.boundingBox();
+  expect(otherBox!.x+otherBox!.width).toBeLessThanOrEqual(bounds!.x+bounds!.width);
   await choice.click();
   await expect(dialog.getByText("選択された回答です。")).toBeVisible();
   await expect.poll(()=>dialog.locator(".chatbot-messages").evaluate((e)=>e.scrollHeight-e.clientHeight-e.scrollTop)).toBeLessThan(3);

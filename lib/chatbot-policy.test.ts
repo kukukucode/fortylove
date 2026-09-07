@@ -63,3 +63,10 @@ it("API認証エラーを利用枠エラーと区別する", async () => {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: { status: "PERMISSION_DENIED" } }), { status: 403 })));
   await expect(embedTexts(["資料"])).rejects.toThrow("Gemini APIキー");
 });
+it("通常チャット向け設定では利用枠エラーを待たずに終了する", async () => {
+  vi.stubEnv("GEMINI_API_KEY", "test");
+  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: { status: "RESOURCE_EXHAUSTED" } }), { status: 429 }));
+  vi.stubGlobal("fetch", fetchMock);
+  await expect(embedTexts(["質問"], true, undefined, undefined, { maxAttempts: 1, requestTimeoutMs: 4_000 })).rejects.toThrow("利用枠");
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+});

@@ -10,7 +10,7 @@ import { POST } from "./route";
 import { issueGeneralTicket } from "@/lib/server/general-answer-ticket";
 beforeEach(()=>{
   vi.clearAllMocks(); vi.stubEnv("SESSION_SECRET","test-only-secret");
-  mocks.session.mockResolvedValue({id:"member-1"});
+  mocks.session.mockResolvedValue({id:"member-1",role:"member"});
   mocks.db.mockReturnValue({rpc:mocks.rpc,from:(table:string)=>({select:()=>({eq:()=>({single:async()=>({data:{role:"member"}}),maybeSingle:async()=>({data:table==="app_settings"?{chatbot_member_enabled:true,chatbot_member_sources:["member.md"],chatbot_admin_sources:["private.md"]}:null})})})})});
   mocks.rpc.mockResolvedValue({data:true}); mocks.read.mockResolvedValue([]); mocks.embed.mockRejectedValue(new Error("Offline"));
 });
@@ -43,4 +43,8 @@ it("上限到達後は一般回答も生成しない",async()=>{
   const ticket=issueGeneralTicket("member-1","member","ラケットの選び方");
   expect((await POST(request({message:"ラケットの選び方",generalTicket:ticket}))).status).toBe(429);
   expect(mocks.generate).not.toHaveBeenCalled();
+});
+it("通常質問のEmbeddingは再試行しない短時間設定を使う",async()=>{
+  await POST(request({message:"質問です"}));
+  expect(mocks.embed).toHaveBeenCalledWith(["質問です"],true,undefined,undefined,{maxAttempts:1,requestTimeoutMs:4000});
 });

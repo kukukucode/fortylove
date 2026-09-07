@@ -19,11 +19,12 @@ const requestSchema = z.object({
 });
 
 function choiceResponse(records: ChatbotKnowledge[]) {
+  const choices = records.slice(0, 3);
   return NextResponse.json({
-    answer: "いくつか近い内容がありました。どれについて知りたいですか？",
+    answer: "質問に近い内容が複数あります。知りたいものを選んでください。",
     source: "Markdown回答候補",
     kind: "choices",
-    choices: records.map((record, index) => ({ id: record.id, label: String(index + 1), title: record.title })),
+    choices: choices.map((record, index) => ({ id: record.id, label: String(index + 1), title: record.title })),
   });
 }
 
@@ -31,13 +32,11 @@ export async function POST(request: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "ログインが必要です。" }, { status: 401 });
   const client = db();
-  const { data: user } = await client.from("users").select("role").eq("id", session.id).single();
-  if (!user) return NextResponse.json({ error: "利用できません。" }, { status: 403 });
 
   const input = requestSchema.safeParse(await request.json().catch(() => null));
   if (!input.success) return NextResponse.json({ error: "質問は500文字以内で入力してください。" }, { status: 400 });
 
-  const role = user.role as ChatbotRole;
+  const role = session.role as ChatbotRole;
   const { data: settings } = await client.from("app_settings").select("chatbot_admin_enabled,chatbot_member_enabled,chatbot_admin_sources,chatbot_member_sources,chatbot_fallback_message").eq("id", 1).maybeSingle();
   if (!canUseChatbot(role, settings)) return NextResponse.json({ error: "チャットBotの利用は許可されていません。" }, { status: 403 });
   const audience = role === "super_admin" ? input.data.audience ?? "member" : role === "admin" ? "admin" : "member";
@@ -73,7 +72,12 @@ export async function POST(request: Request) {
   let decision = decideKnowledgeResponse(input.data.message, knowledge);
   if (decision.kind !== "direct") {
     try {
-      const [vector] = await embedTexts([input.data.message], true);
+      // Interactive chat must not inherit the long retry policy used by bulk imports.
+      // If Gemini is busy, keyword retrieval remains available immediately.
+      const [vector] = await embedTexts([input.data.message], true, undefined, undefined, {
+        maxAttempts: 1,
+        requestTimeoutMs: 4_000,
+      });
       const { data, error } = await client.rpc("chatbot_semantic_matches", { p_sources: sourceNames, p_query: vector });
       if (!error && data) decision = decideKnowledgeResponse(input.data.message, knowledge, Object.fromEntries(data.map((item: { id: string; similarity: number }) => [item.id, item.similarity])));
     } catch { /* Keyword retrieval remains available when the embedding service is unavailable. */ }
@@ -87,7 +91,12 @@ export async function POST(request: Request) {
     if (synthesized) {
       return NextResponse.json({ answer: synthesized, source: "Gemini・関連Markdown", kind: "gemini" });
     }
-    return choiceResponse(decision.records);
+    if (decision.records.length > 1) return choiceResponse(decision.records);
+    return NextResponse.json({
+      answer: "関連しそうな資料はありますが、質問を特定できませんでした。知りたい内容をもう少し具体的に入力してください。",
+      source: "Markdown回答候補",
+      kind: "fallback",
+    });
   }
 
   return NextResponse.json({
