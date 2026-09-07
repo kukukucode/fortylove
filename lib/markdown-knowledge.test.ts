@@ -25,7 +25,10 @@ describe("Markdown knowledge import", () => {
       "案内",
     );
     expect(result[0].content).toContain("回答前 回答後 強調");
-    expect(result[0].content).not.toMatch(/<!--|<script|<strong|hidden/);
+    expect(result[0].content).not.toContain("<!--");
+    expect(result[0].content).not.toContain("<script");
+    expect(result[0].content).not.toContain("<strong");
+    expect(result[0].content).not.toContain("hidden");
   });
 
   it("閉じられていないコメントやタグより後を回答に含めない", () => {
