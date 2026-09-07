@@ -8,10 +8,39 @@ export type MarkdownKnowledgeDraft = {
 
 type WorkingSection = { title: string; category: string; lines: string[]; order: number };
 
+function removeDelimitedBlock(value: string, opener: string, closer: string) {
+  let result = "";
+  let cursor = 0;
+  while (cursor < value.length) {
+    const start = value.indexOf(opener, cursor);
+    if (start < 0) return result + value.slice(cursor);
+    result += value.slice(cursor, start);
+    const end = value.indexOf(closer, start + opener.length);
+    if (end < 0) return result;
+    result += " ";
+    cursor = end + closer.length;
+  }
+  return result;
+}
+
+function removeMarkupTags(value: string) {
+  let result = "";
+  let insideTag = false;
+  for (const character of value) {
+    if (character === "<") {
+      if (!insideTag) result += " ";
+      insideTag = true;
+    } else if (insideTag) {
+      if (character === ">") insideTag = false;
+    } else {
+      result += character;
+    }
+  }
+  return result;
+}
+
 function plainText(markdown: string) {
-  return markdown
-    .replace(/<!--[^]*?-->/g, "")
-    .replace(/```[^]*?```/g, "")
+  return removeMarkupTags(removeDelimitedBlock(removeDelimitedBlock(markdown, "<!--", "-->"), "```", "```"))
     .replace(/`([^`]+)`/g, "$1")
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
@@ -19,7 +48,6 @@ function plainText(markdown: string) {
     .replace(/^\s*[-*+]\s+/gm, "・")
     .replace(/^\s*\d+[.)]\s+/gm, "・")
     .replace(/[*_~]/g, "")
-    .replace(/<[^>]+>/g, "")
     .replace(/\|\s*:?-{3,}:?\s*(?=\|)/g, "|")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
