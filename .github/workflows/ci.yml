@@ -129,39 +129,36 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - name: Install Playwright Chromium
-        if: steps.changes.outputs.heavy_verify == 'true'
+        if: steps.changes.outputs.ui_verify == 'true'
         run: pnpm exec playwright install --with-deps chromium
-      - name: Run Playwright smoke tests
-        if: steps.changes.outputs.heavy_verify == 'true'
-        run: pnpm test:e2e:smoke
-      - name: Check chatbot and FAQ on desktop and mobile
-        if: steps.changes.outputs.heavy_verify == 'true'
-        run: pnpm test:e2e:experience
+      - name: Production build and focused UI, responsive and accessibility checks
+        if: steps.changes.outputs.ui_verify == 'true'
+        run: pnpm test:e2e:ui
       - name: Install pinned PostgREST for real database E2E
-        if: steps.changes.outputs.heavy_verify == 'true'
+        if: steps.changes.outputs.full_verify == 'true'
         run: |
           curl --fail --location --retry 3 https://github.com/PostgREST/postgrest/releases/download/v12.2.12/postgrest-v12.2.12-linux-static-x86-64.tar.xz --output "$RUNNER_TEMP/postgrest.tar.xz"
           mkdir "$RUNNER_TEMP/fortylove-postgrest"
           tar -xf "$RUNNER_TEMP/postgrest.tar.xz" -C "$RUNNER_TEMP/fortylove-postgrest"
           echo "$RUNNER_TEMP/fortylove-postgrest" >> "$GITHUB_PATH"
       - name: Create isolated test fixtures (missing setup fails CI)
-        if: steps.changes.outputs.heavy_verify == 'true'
+        if: steps.changes.outputs.full_verify == 'true'
         run: pnpm test:quality:setup
       - name: Install PostgreSQL 17 restore tools
-        if: steps.changes.outputs.heavy_verify == 'true'
+        if: steps.changes.outputs.full_verify == 'true'
         run: |
           sudo apt-get install -y postgresql-common
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo apt-get install -y postgresql-client-17
           echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
       - name: Production build, required business E2E, accessibility and measured SLO
-        if: steps.changes.outputs.heavy_verify == 'true'
+        if: steps.changes.outputs.full_verify == 'true'
         run: pnpm test:quality
       - name: Backup and restore rehearsal in a separate local database
-        if: steps.changes.outputs.heavy_verify == 'true'
+        if: steps.changes.outputs.full_verify == 'true'
         run: node scripts/quality/restore-drill.mjs
       - uses: actions/upload-artifact@v4
-        if: always() && steps.changes.outputs.heavy_verify == 'true'
+        if: always() && steps.changes.outputs.full_verify == 'true'
         with:
           name: quality-measurements
           path: .ops-reports/*.json

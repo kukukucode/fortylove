@@ -1,9 +1,9 @@
 import { spawn, spawnSync } from "node:child_process";
 
 const mode = process.argv[2];
-if (!new Set(["smoke", "experience"]).has(mode)) throw new Error("Usage: e2e-stack.mjs <smoke|experience>");
+if (!new Set(["smoke", "experience", "ui"]).has(mode)) throw new Error("Usage: e2e-stack.mjs <smoke|experience|ui>");
 
-const port = mode === "experience" ? 3011 : 3000;
+const port = mode === "smoke" ? 3000 : 3011;
 const baseUrl = `http://127.0.0.1:${port}`;
 const children = [];
 const appEnv = {
@@ -33,24 +33,24 @@ function completedTestRun(child) {
       if (settled) return;
       settled = true;
       clearTimeout(timeout);
-      stop(child);
       if (error) reject(error);
       else resolve();
     };
     const inspect = (chunk, target) => {
       target.write(chunk);
       output = `${output}${chunk}`.replace(/\x1b\[[0-9;]*m/g, "").slice(-20_000);
-      if (/\b\d+ passed\b/.test(output)) {
-        process.stdout.write("E2E completion confirmed; stopping isolated test services.\n");
-        finish();
-      }
-      else if (/\b\d+ failed\b/.test(output)) finish(new Error("E2E tests failed"));
     };
     child.stdout.on("data", (chunk) => inspect(chunk, process.stdout));
     child.stderr.on("data", (chunk) => inspect(chunk, process.stderr));
     child.once("error", finish);
-    child.once("exit", (code) => code === 0 ? finish() : finish(new Error(`E2E command failed (${code})`)));
-    const timeout = setTimeout(() => finish(new Error("E2E test runner timed out")), 10 * 60_000);
+    child.once("exit", (code) => {
+      if (code === 0 && !/\b\d+ failed\b/.test(output)) finish();
+      else finish(new Error(`E2E command failed (${code})`));
+    });
+    const timeout = setTimeout(() => {
+      stop(child);
+      finish(new Error("E2E test runner timed out"));
+    }, 10 * 60_000);
   });
 }
 async function ready(url) {
@@ -83,14 +83,21 @@ try {
   await finished(start(process.execPath, ["node_modules/next/dist/bin/next", "build"], appEnv));
   start(process.execPath, ["node_modules/next/dist/bin/next", "start", "--hostname", "127.0.0.1", "--port", String(port)], appEnv);
   await ready(`${baseUrl}/login`);
-  const testArgs = mode === "experience"
-    ? ["node_modules/@playwright/test/cli.js", "test", "-c", "playwright.experience.config.ts"]
-    : ["node_modules/@playwright/test/cli.js", "test", "e2e/public-auth.spec.ts"];
-  const testProcess = start(process.execPath, testArgs, {
-    E2E_EXTERNAL_TEST_SERVERS: "1",
-    E2E_BASE_URL: baseUrl,
-  }, ["ignore", "pipe", "pipe"]);
-  await completedTestRun(testProcess);
+  const testRuns = mode === "ui"
+    ? [
+        ["node_modules/@playwright/test/cli.js", "test", "e2e/public-auth.spec.ts"],
+        ["node_modules/@playwright/test/cli.js", "test", "-c", "playwright.experience.config.ts"],
+      ]
+    : [mode === "experience"
+        ? ["node_modules/@playwright/test/cli.js", "test", "-c", "playwright.experience.config.ts"]
+        : ["node_modules/@playwright/test/cli.js", "test", "e2e/public-auth.spec.ts"]];
+  for (const testArgs of testRuns) {
+    const testProcess = start(process.execPath, testArgs, {
+      E2E_EXTERNAL_TEST_SERVERS: "1",
+      E2E_BASE_URL: baseUrl,
+    }, ["ignore", "pipe", "pipe"]);
+    await completedTestRun(testProcess);
+  }
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
   process.exitCode = 1;
