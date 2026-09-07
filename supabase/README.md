@@ -18,7 +18,7 @@ SQL Editorで`schema.sql`を実行します。これは現行構造の完成版�
 
 ## 今後の変更
 
-2026-09-06のChatbot・FAQ改善には追加マイグレーションが必要です。[反映手順](../docs/operations/chatbot-experience-rollout.md)を確認してください。
+本番DBを変更するときは、[データベース変更手順](../docs/operations/database.md)を確認してください。
 
 - `migrations/`へ日付順の新規ファイルとして追加する。
 - 一度適用したマイグレーションは編集しない。
