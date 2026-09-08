@@ -160,7 +160,7 @@ jobs:
       - name: Backup and restore rehearsal in a separate local database
         if: steps.changes.outputs.heavy_verify == 'true'
         run: node scripts/quality/restore-drill.mjs
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always() && steps.changes.outputs.heavy_verify == 'true'
         with:
           name: quality-measurements
