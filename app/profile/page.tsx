@@ -3,9 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { deleteOwnAccount, logout, updateProfile } from "@/app/actions";
-import { Brand } from "@/components/brand";
-import { MemberNav } from "@/components/member-nav";
-import { UserMenu } from "@/components/user-menu";
+import { MemberHeader } from "@/components/member-header";
 import { UniversityFields } from "@/components/university-fields";
 import { AvatarInput } from "@/components/avatar-input";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
@@ -24,8 +22,7 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
     client.from("app_settings").select("chatbot_member_enabled").eq("id", 1).maybeSingle(),
   ]);
   return <main className="member-shell">
-    <header className="member-header"><Brand /><UserMenu name={session.name} avatarUrl={user?.avatar_url} /></header>
-    <MemberNav active="profile" />
+    <MemberHeader active="profile" name={session.name} avatarUrl={user?.avatar_url} />
     <section className="profile-card">
       <div className={`profile-avatar${user?.avatar_url ? " has-image" : ""}`}>{user?.avatar_url ? (
         // eslint-disable-next-line @next/next/no-img-element -- Public Supabase avatar URLs are already resized by CSS and must support the configured project host.

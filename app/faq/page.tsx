@@ -1,8 +1,6 @@
 import { FormFeedback } from "@/components/form-feedback";
 import { redirect } from "next/navigation";
-import { Brand } from "@/components/brand";
-import { MemberNav } from "@/components/member-nav";
-import { UserMenu } from "@/components/user-menu";
+import { MemberHeader } from "@/components/member-header";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { submitFaqQuestion } from "@/app/server-actions/faq-actions";
@@ -28,8 +26,7 @@ export default async function FaqPage({ searchParams }: { searchParams: Promise<
     ...usedCategories.filter((name) => !(categories ?? []).some((category) => category.name === name)),
   ];
   return <main className="member-shell faq-page">
-    <header className="member-header"><Brand /><UserMenu name={user?.name ?? session.name} avatarUrl={user?.avatar_url} /></header>
-    <MemberNav active="faq" />
+    <MemberHeader active="faq" name={user?.name ?? session.name} avatarUrl={user?.avatar_url} />
     <section className="faq-hero"><p className="eyebrow green">HELP CENTER</p><h1>よくある質問</h1><p>練習・イベントや入会について、よくある質問をまとめています。</p></section>
     <section className="faq-content">
       {faqsError && <div className="alert">FAQを読み込めませんでした。時間をおいてお試しください。</div>}

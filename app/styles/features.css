@@ -29,7 +29,6 @@ select:disabled {
   color: var(--muted);
   opacity: 1;
 }
-.brand-mark svg { width: 30px; height: 30px; color: var(--lime); }
 .profile-status .primary { width: auto; }
 .success-message {
   padding: 12px 14px;
@@ -90,7 +89,6 @@ select:disabled {
 .calendar-day.today .calendar-date { background: var(--green); color: white; }
 .calendar-events { display: grid; gap: 4px; margin-top: 5px; }
 .calendar-events a { min-width: 0; padding: 5px 6px; border-radius: 6px; background: #eaf1ec; color: var(--green); font-size: 10px; font-weight: 700; }
-.calendar-events a.social-event { background: #f2ead9; color: #80633a; }
 .calendar-events time { display: block; font-size: 9px; opacity: .72; }
 .calendar-events span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .calendar-event-location { margin-top: 2px; font-size: 9px; font-weight: 500; opacity: .72; }
@@ -115,7 +113,6 @@ select:disabled {
 .avatar.has-image,
 .profile-avatar.has-image { background: transparent; }
 .avatar-content { display: grid; width: 100%; height: 100%; place-items: center; border-radius: inherit; overflow: hidden; }
-.mobile-menu-label { display: none; }
 .user-menu { position: relative; }
 .user-menu-panel {
   position: absolute;
@@ -646,10 +643,7 @@ select:disabled {
   .event-chip { display: inline-block; max-width: 100%; overflow-wrap: anywhere; }
   .membership-candidate-summary { grid-template-columns: 1fr; }
   .direct-membership-form > .primary { width: 100%; }
-  .user-menu .avatar { width: auto; height: 38px; padding: 0 11px; border-radius: 9px; background: var(--ink); }
-  .user-menu .avatar-content { display: none; }
-  .mobile-menu-label { display: flex; align-items: center; gap: 7px; color: white; font-size: 12px; }
-  .mobile-menu-label svg { width: 18px; height: 18px; }
+  .user-menu .avatar { width: 38px; height: 38px; padding: 0; border-radius: 50%; background: var(--ink); }
   .user-menu-panel { width: min(260px, calc(100vw - 32px)); }
   .admin-nav-desktop { display: none; }
   .admin-mobile-menu { display: block; }

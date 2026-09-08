@@ -15,6 +15,15 @@ for (const path of ["/login", "/register"]) test(`axe: ${path}`, async ({ page }
 test("axe: 会員予約画面・FAQ・チャットを開いた状態", async ({ page }) => {
   await loginAs(page);
   expect((await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()).violations).toEqual([]);
+  await page.goto("/events");
+  expect((await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()).violations).toEqual([]);
+  const firstEvent = page.locator(".event-gallery-card").first();
+  if (await firstEvent.count()) {
+    await firstEvent.click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    expect((await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()).violations).toEqual([]);
+    await page.keyboard.press("Escape");
+  }
   await page.goto("/faq");
   expect((await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()).violations).toEqual([]);
   await page.getByRole("button", { name: "チャットを開く" }).click();
