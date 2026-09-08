@@ -35,23 +35,27 @@ body {
 .auth-message > p:last-child { color: #52617a; }
 .auth-art .ball {
   overflow: hidden;
-  border: 1px solid rgba(112, 133, 57, .16);
-  background: radial-gradient(circle at 32% 28%, #eef5c7 0%, #d8e89d 48%, #c5d77f 100%);
-  box-shadow: inset -10px -8px 16px rgba(88, 106, 40, .08);
+  border: 2px solid rgba(112, 133, 57, .14);
+  background:
+    radial-gradient(circle at 33% 28%, rgba(255, 255, 255, .42) 0 9%, transparent 10%),
+    linear-gradient(145deg, #e8f2b5 0%, #cfe492 100%);
+  box-shadow: 0 7px 16px rgba(73, 92, 38, .08);
 }
 .auth-art .ball::before,
 .auth-art .ball::after {
   content: "";
   position: absolute;
-  top: -10%;
-  width: 78%;
-  height: 120%;
-  border: 2px solid rgba(255, 255, 255, .86);
+  top: -8%;
+  width: 76%;
+  height: 116%;
+  border: 3px solid rgba(255, 255, 255, .9);
   border-radius: 50%;
   transform: none;
 }
-.auth-art .ball::before { left: -61%; }
-.auth-art .ball::after { inset: auto -61% auto auto; top: -10%; }
+.auth-art .ball::before { left: -59%; }
+.auth-art .ball::after { inset: auto -59% auto auto; top: -8%; }
+.auth-art .ball-two::before,
+.auth-art .ball-two::after { border-width: 2px; }
 
 .primary {
   background: linear-gradient(135deg, var(--green), #4266d0);
