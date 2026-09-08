@@ -9,15 +9,18 @@ test.beforeAll(async () => {
 test("実DB: 会員ログイン→予約→キャンセルとDB状態を確認", async ({ page }) => {
   await assertDb(qualityDb.from("reservations").delete().eq("user_id", memberId).eq("event_id", eventId));
   await loginAs(page);
-  const card = page.locator(".event-card").filter({ hasText: "Quality Reservation Event" });
+  await page.goto("/events");
+  const card = page.locator(".event-gallery-card").filter({ hasText: "Quality Reservation Event" });
+  await card.click();
+  const detail = page.getByRole("dialog", { name: /Quality Reservation Event/ });
   page.once("dialog", (dialog) => dialog.accept());
-  await card.getByRole("button", { name: "予約する", exact: true }).click();
-  await expect(card.getByRole("button", { name: "予約済み", exact: true })).toBeVisible();
+  await detail.getByRole("button", { name: "予約する", exact: true }).click();
+  await expect(detail.getByRole("button", { name: "予約済み", exact: true })).toBeVisible();
   const reserved = await assertDb(qualityDb.from("reservations").select("status").eq("user_id", memberId).eq("event_id", eventId).single());
   expect(reserved.data?.status).toBe("reserved");
   page.once("dialog", (dialog) => dialog.accept());
-  await card.getByRole("button", { name: "予約済み", exact: true }).click();
-  await expect(card.getByRole("button", { name: "予約する", exact: true })).toBeVisible();
+  await detail.getByRole("button", { name: "予約済み", exact: true }).click();
+  await expect(detail.getByRole("button", { name: "予約する", exact: true })).toBeVisible();
   const cancelled = await assertDb(qualityDb.from("reservations").select("status").eq("user_id", memberId).eq("event_id", eventId).single());
   expect(cancelled.data?.status).toBe("cancelled");
 });

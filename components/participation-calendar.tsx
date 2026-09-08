@@ -73,7 +73,7 @@ export function ParticipationCalendar({ events, focusEventId }: { events: Calend
       const key = date ? utcDateKey(date) : "";
       const dayEvents = date ? eventMap.get(key) ?? [] : [];
       return <div className={`calendar-day${!date ? " empty-day" : ""}${key === todayKey ? " today" : ""}`} key={date?.toISOString() ?? `empty-${index}`}>
-        {date && <><span className="calendar-date">{date.getUTCDate()}</span><div className="calendar-events">{dayEvents.map(({ event, timeLabel }) => <a href={`#event-${event.id}`} className={event.event_type === "tennis" ? "tennis-event" : "social-event"} key={event.id} title={`${event.title}｜${event.location}`}><time>{timeLabel}</time><span className="calendar-event-title">{event.title}</span><span className="calendar-event-location">{event.location}</span></a>)}</div></>}
+        {date && <><span className="calendar-date">{date.getUTCDate()}</span><div className="calendar-events">{dayEvents.map(({ event, timeLabel }) => <a href={`/events#event-${event.id}`} className={event.event_type === "tennis" ? "tennis-event" : "general-event"} key={event.id} title={`${event.title}｜${event.location}`}><time>{timeLabel}</time><span className="calendar-event-title">{event.title}</span><span className="calendar-event-location">{event.location}</span></a>)}</div></>}
       </div>;
     })}</div></div>
     {!events.length && <p className="calendar-empty">予約すると、ここに参加日程が表示されます。</p>}

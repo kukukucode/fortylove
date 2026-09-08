@@ -8,7 +8,7 @@ test("SLO: production build・実DBの画面応答と資料回答を実測", asy
   test.setTimeout(120000);
   await loginAs(page, "Owner");
   const report: Record<string, unknown> = { measuredAt: new Date().toISOString(), environment: "isolated production build / real PostgreSQL+PostgREST", samplesPerScenario: 20, caveat: "ローカル基準値。本番ネットワーク・外部AI生成・月間可用性の達成を示すものではない。" };
-  for (const path of ["/home", "/admin/events"]) {
+  for (const path of ["/home", "/events", "/admin/events"]) {
     const server: number[] = [], visible: number[] = [];
     for (let i = 0; i < 20; i++) {
       await page.goto(path); await expect(page.locator("h1")).toBeVisible();
@@ -28,7 +28,7 @@ test("SLO: production build・実DBの画面応答と資料回答を実測", asy
   await mkdir(".ops-reports", { recursive: true });
   await writeFile(".ops-reports/performance.json", JSON.stringify(report, null, 2));
   // Enforce the stated screen SLO locally. AI latency is recorded separately, not conflated with direct answers.
-  for (const path of ["/home", "/admin/events"]) {
+  for (const path of ["/home", "/events", "/admin/events"]) {
     const result = report[path] as { serverP95Ms: number; visibleP95Ms: number };
     expect(result.serverP95Ms, `${path}: server p95`).toBeLessThanOrEqual(1000);
     expect(result.visibleP95Ms, `${path}: visible p95`).toBeLessThanOrEqual(2500);

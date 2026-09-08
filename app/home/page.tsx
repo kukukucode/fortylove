@@ -1,71 +1,64 @@
-import { Clock3, MapPin, UsersRound } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, CalendarDays, Clock3, MapPin } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Brand } from "@/components/brand";
-import { MemberNav } from "@/components/member-nav";
 import { ClearRegistrationDraft } from "@/components/registration-draft";
-import { UserMenu } from "@/components/user-menu";
-import { ReservationForm } from "@/components/reservation-form";
 import { SiteFooter } from "@/components/site-footer";
 import { ParticipationCalendar } from "@/components/participation-calendar";
-import { PdfViewer } from "@/components/pdf-viewer";
 import { ChatbotWidget } from "@/components/chatbot-widget";
+import { MemberHeader } from "@/components/member-header";
 import { tokyoParts, tokyoTimeLabel } from "@/lib/datetime";
 
 export const dynamic = "force-dynamic";
-const dateParts = (iso: string) => {
-  const value = tokyoParts(iso);
-  return { key: `${value.year}-${value.month}-${value.day}`, month: value.month, day: value.day, weekday: value.weekday };
-};
-const timeLabel = tokyoTimeLabel;
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ error?: string; reserved?: string; cancelled?: string }> }) {
-  const user = await getSession(); if (!user) redirect("/login");
+  const user = await getSession();
+  if (!user) redirect("/login");
   const { error, reserved, cancelled } = await searchParams;
   const client = db();
-  const [{ data: events }, { data: reservations }, { data: profile }, { data: documents }, { data: settings }] = await Promise.all([
-    client.from("events").select("*,reservations(id,status)").gte("ends_at", new Date().toISOString()).order("starts_at"),
+  const [{ data: events }, { data: reservations }, { data: profile }, { data: settings }] = await Promise.all([
+    client.from("events").select("id,title,location,starts_at,ends_at,event_type").gte("ends_at", new Date().toISOString()).order("starts_at"),
     client.from("reservations").select("event_id,status").eq("user_id", user.id),
     client.from("users").select("avatar_url").eq("id", user.id).maybeSingle(),
-    client.from("event_documents").select("event_id,file_path,file_name"),
     client.from("app_settings").select("chatbot_member_enabled").eq("id", 1).maybeSingle(),
   ]);
-  const documentUrlByEvent = new Map<string, { url: string; fileName: string }>();
-  if (documents?.length) {
-    const { data: signedDocuments } = await client.storage.from("event-documents").createSignedUrls(documents.map((document) => document.file_path), 3600);
-    signedDocuments?.forEach((signed) => {
-      const document = documents.find((item) => item.file_path === signed.path);
-      if (document && signed.signedUrl) documentUrlByEvent.set(document.event_id, { url: signed.signedUrl, fileName: document.file_name });
-    });
-  }
-  const status = new Map(reservations?.map(r => [r.event_id, r.status]));
-  const participationEvents = (events ?? []).filter((event) => ["reserved", "attended"].includes(status.get(event.id) ?? "")).map((event) => ({ id: event.id, title: event.title, location: event.location, starts_at: event.starts_at, ends_at: event.ends_at, event_type: event.event_type }));
+  const status = new Map(reservations?.map((reservation) => [reservation.event_id, reservation.status]));
+  const participationEvents = (events ?? [])
+    .filter((event) => ["reserved", "attended"].includes(status.get(event.id) ?? ""))
+    .map((event) => ({ id: event.id, title: event.title, location: event.location, starts_at: event.starts_at, ends_at: event.ends_at, event_type: event.event_type }));
+  const nextEvent = participationEvents[0];
+  const nextDate = nextEvent ? tokyoParts(nextEvent.starts_at) : undefined;
+
   return <main className="member-shell">
     <ClearRegistrationDraft />
-    <header className="member-header"><Brand /><UserMenu name={user.name} avatarUrl={profile?.avatar_url} /></header>
-    <MemberNav active="home" />
-    <section className="welcome"><div><p className="eyebrow green">GOOD TO SEE YOU</p><h1>{user.name}さん、こんにちは。</h1><p>練習やイベントをチェックして、Fortyloveを楽しみましょう。</p></div><div className="mini-court"><span /></div></section>
-    <section className="member-content">
+    <MemberHeader active="home" name={user.name} avatarUrl={profile?.avatar_url} />
+    <section className="welcome">
+      <div><p className="eyebrow green">WELCOME BACK</p><h1>{user.name}さん、こんにちは。</h1><p>参加予定を確認して、次のFortyloveを楽しみましょう。</p></div>
+      <div className="mini-court" aria-hidden="true">
+        <span className="court-singles" />
+        <span className="court-service-box" />
+        <span className="court-net" />
+        <i className="court-ball" />
+      </div>
+    </section>
+    <section className="member-content home-content">
       {error === "full" && <div className="alert">申し訳ございません。定員がいっぱいになってしまっています。</div>}
       {error === "reservation" && <div className="alert">予約を登録できませんでした。もう一度お試しください。</div>}
       {error === "cancel-deadline" && <div className="alert">開始2時間前を過ぎた予定は、画面からキャンセルできません。</div>}
       {reserved && <div className="success-message">参加予約を登録し、カレンダーへ反映しました。</div>}
       {cancelled && <div className="success-message">参加予約をキャンセルしました。</div>}
+
       <ParticipationCalendar events={participationEvents} focusEventId={reserved} />
-      <div className="section-head"><div><p className="eyebrow green">UPCOMING</p><h2 id="events">これからのイベント</h2></div><span className="count">{events?.length ?? 0}件</span></div>
-      <div className="event-list">{events?.map(event => {
-        const booked = status.get(event.id) === "reserved";
-        const count = event.reservations.filter((r: {status:string}) => r.status === "reserved").length;
-        const startDate = dateParts(event.starts_at);
-        const endDate = dateParts(event.ends_at);
-        const spansMultipleDays = startDate.key !== endDate.key;
-        return <article className="event-card" id={`event-${event.id}`} key={event.id}>
-          <div className={`event-date${spansMultipleDays ? " date-range" : ""}`}><div><strong><span>{startDate.month}月</span><span>{startDate.day}日</span></strong><span>（{startDate.weekday}）</span></div>{spansMultipleDays && <><b>～</b><div><strong><span>{endDate.month}月</span><span>{endDate.day}日</span></strong><span>（{endDate.weekday}）</span></div></>}</div>
-          <div className="event-main"><h3>{event.title}</h3><div className="event-meta"><span><Clock3 />{timeLabel(event.starts_at)}–{timeLabel(event.ends_at)}</span><span><MapPin />{event.location}</span><span><UsersRound />{count}/{event.capacity}名</span></div><p>{event.description}</p>{documentUrlByEvent.get(event.id) && <PdfViewer title={event.title} fileName={documentUrlByEvent.get(event.id)!.fileName} url={documentUrlByEvent.get(event.id)!.url} />}</div>
-          <ReservationForm eventId={event.id} title={event.title} booked={booked} full={count >= event.capacity} />
-        </article>;
-      })}</div>
+
+      <section className="home-next-event" aria-labelledby="next-event-heading">
+        <div className="section-head"><div><p className="eyebrow green">NEXT UP</p><h2 id="next-event-heading">次の参加予定</h2></div><Link href="/events">イベントを探す<ArrowRight /></Link></div>
+        {nextEvent && nextDate ? <Link className="next-event-card" href={`/events#event-${nextEvent.id}`}>
+          <span className="next-event-date"><strong>{nextDate.day}</strong><small>{nextDate.month}月・{nextDate.weekday}</small></span>
+          <span className="next-event-main"><small>{nextEvent.event_type === "tennis" ? "テニス" : "イベント"}</small><strong>{nextEvent.title}</strong><span><Clock3 />{tokyoTimeLabel(nextEvent.starts_at)}–{tokyoTimeLabel(nextEvent.ends_at)} <MapPin />{nextEvent.location}</span></span>
+          <ArrowRight />
+        </Link> : <div className="next-event-empty"><CalendarDays /><div><strong>参加予定はまだありません</strong><p>イベント一覧から気になる予定を探してみましょう。</p></div><Link className="primary" href="/events">イベントを見る</Link></div>}
+      </section>
     </section>
     <SiteFooter />
     {settings?.chatbot_member_enabled === true && <ChatbotWidget mode="member" />}

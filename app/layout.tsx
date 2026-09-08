@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import "./features.css";
-import "./experience.css";
+import "./styles/features.css";
+import "./styles/interactions.css";
+import "./styles/theme.css";
+import "./styles/member-navigation.css";
+import "./styles/events.css";
+import "./styles/loading.css";
 import { NavigationFeedback } from "@/components/navigation-feedback";
 import { ScrollToTop } from "@/components/scroll-to-top";
 

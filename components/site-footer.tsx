@@ -15,7 +15,7 @@ export function SiteFooter() {
         <nav className="footer-nav" aria-label="フッターナビゲーション">
           <strong>MENU</strong>
           <Link href="/home">ホーム</Link>
-          <Link href="/home#events">練習日程</Link>
+          <Link href="/events">イベント一覧</Link>
           <Link href="/profile">プロフィール</Link>
         </nav>
         <div className="footer-social">
