@@ -142,3 +142,15 @@ test("会員ホーム・イベントナビ・イベント詳細を表示でき�
   await expect(page.getByRole("dialog",{name:/初心者歓迎 テニス練習会/})).toBeVisible();
   await page.screenshot({path:testInfo.outputPath("event-detail.png"),fullPage:true});
 });
+
+test("プロフィールメニューはデスクトップの会員ナビと重ならない",async({page},testInfo)=>{
+  test.skip(testInfo.project.name==="mobile","モバイルでは下部ナビを使用するため");
+  await page.goto("/faq");
+  await page.locator(".user-menu > summary").click();
+  const menu=page.locator(".user-menu-panel");
+  const tabs=page.locator(".member-tabs");
+  await expect(menu).toBeVisible();
+  const menuBox=await menu.boundingBox();
+  const tabsBox=await tabs.boundingBox();
+  expect(menuBox!.y).toBeGreaterThanOrEqual(tabsBox!.y+tabsBox!.height);
+});
