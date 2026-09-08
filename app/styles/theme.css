@@ -34,11 +34,24 @@ body {
 .auth-art::after { border-color: rgba(51, 78, 172, .13); }
 .auth-message > p:last-child { color: #52617a; }
 .auth-art .ball {
-  border: 1px solid rgba(25, 120, 105, .1);
-  background: #a8ded5;
-  box-shadow: inset -12px -10px 20px rgba(23, 104, 93, .07);
+  overflow: hidden;
+  border: 1px solid rgba(112, 133, 57, .16);
+  background: radial-gradient(circle at 32% 28%, #eef5c7 0%, #d8e89d 48%, #c5d77f 100%);
+  box-shadow: inset -10px -8px 16px rgba(88, 106, 40, .08);
 }
-.auth-art .ball::after { border-top-color: rgba(255, 255, 255, .8); border-bottom-color: rgba(255, 255, 255, .8); }
+.auth-art .ball::before,
+.auth-art .ball::after {
+  content: "";
+  position: absolute;
+  top: -10%;
+  width: 78%;
+  height: 120%;
+  border: 2px solid rgba(255, 255, 255, .86);
+  border-radius: 50%;
+  transform: none;
+}
+.auth-art .ball::before { left: -61%; }
+.auth-art .ball::after { inset: auto -61% auto auto; top: -10%; }
 
 .primary {
   background: linear-gradient(135deg, var(--green), #4266d0);
@@ -63,6 +76,15 @@ select:focus,
 textarea:focus {
   border-color: var(--green);
   box-shadow: 0 0 0 3px rgba(51, 78, 172, .12);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: transparent;
+  outline: 2px solid rgba(51, 78, 172, .48);
+  outline-offset: 1px;
+  box-shadow: none;
 }
 
 .member-header,
