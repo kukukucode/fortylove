@@ -30,6 +30,10 @@ select:disabled {
   opacity: 1;
 }
 .profile-status .primary { width: auto; }
+.profile-card { position: relative; z-index: 0; }
+.profile-affiliation { margin: 8px 0 0; color: var(--muted); text-align: center; }
+.profile-affiliation p { margin: 3px 0; line-height: 1.55; }
+.profile-affiliation .profile-grade { margin-top: 7px; font-size: 13px; }
 .success-message {
   padding: 12px 14px;
   margin: 18px 0;
@@ -116,7 +120,7 @@ select:disabled {
 .user-menu { position: relative; }
 .user-menu-panel {
   position: absolute;
-  z-index: 20;
+  z-index: 70;
   top: 48px;
   right: 0;
   width: 220px;
@@ -242,7 +246,7 @@ select:disabled {
 .faq-item summary::after { content: "＋"; position: absolute; right: 20px; color: var(--green); }
 .faq-item[open] summary::after { content: "−"; }
 .faq-item p { margin: 0; padding: 0 20px 20px; color: var(--muted); line-height: 1.85; white-space: pre-wrap; }
-.faq-question-panel { margin-bottom: 34px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.faq-question-panel { margin: 34px 0 0; padding: 18px 20px; border: 1px solid var(--line); border-radius: 12px; background: white; }
 .faq-question-panel summary { cursor: pointer; color: var(--green); font-weight: 700; }
 .faq-question-panel form { display: grid; gap: 12px; margin-top: 18px; }
 .faq-question-panel small { color: var(--muted); }
@@ -645,6 +649,7 @@ select:disabled {
   .direct-membership-form > .primary { width: 100%; }
   .user-menu .avatar { width: 38px; height: 38px; padding: 0; border-radius: 50%; background: var(--ink); }
   .user-menu-panel { width: min(260px, calc(100vw - 32px)); }
+  .member-header .mobile-logout-form button { color: var(--ink); font-size: 14px; font-weight: 700; opacity: 1; }
   .admin-nav-desktop { display: none; }
   .admin-mobile-menu { display: block; }
   .admin-mobile-menu > summary { display: flex; align-items: center; justify-content: space-between; cursor: pointer; list-style: none; }

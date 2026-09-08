@@ -1,4 +1,6 @@
 .member-header {
+  position: relative;
+  z-index: 60;
   display: flex;
   height: 72px;
   align-items: center;
@@ -61,6 +63,12 @@
 
 .bottom-nav {
   display: none;
+}
+
+@media (min-width: 701px) {
+  .member-header .user-menu-panel {
+    top: 120px;
+  }
 }
 
 @media (max-width: 700px) {

@@ -29,7 +29,12 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
         <img src={user.avatar_url} alt="" />
       ) : session.name[0]}</div>
       <h1>{session.name}</h1>
-      <p>{user?.university}・{user?.faculty}{visibleDepartment(user?.department) ? `・${visibleDepartment(user?.department)}` : ""}・{Number(user?.grade) >= 5 ? "4年以上" : `${user?.grade}年`}</p>
+      <div className="profile-affiliation">
+        {user?.university && <p>{user.university}</p>}
+        {user?.faculty && <p>{user.faculty}</p>}
+        {visibleDepartment(user?.department) && <p>{visibleDepartment(user?.department)}</p>}
+        <p className="profile-grade">{Number(user?.grade) >= 5 ? "4年以上" : `${user?.grade}年`}</p>
+      </div>
       {saved && <div className="success-message">プロフィールを更新しました。</div>}
       {error && <div className="alert">{error === "avatar-size" ? "画像は2MB以下にしてください。" : error === "avatar-type" ? "JPEG・PNG・WebP・GIF画像を選択してください。" : error === "avatar-upload" ? "画像をアップロードできませんでした。" : error === "avatar-column" ? "Supabaseに画像保存用の設定がありません。管理者に確認してください。" : error === "delete" ? "退会処理ができませんでした。" : "更新できませんでした。もう一度お試しください。"}</div>}
       <form action={updateProfile} className="profile-edit-form"><FormFeedback />

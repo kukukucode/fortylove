@@ -128,6 +128,9 @@ test("受付停止は新規登録のみ・FAQを会員ナビから開ける",asy
   await expect(page.getByRole("heading",{name:"次の参加予定"})).toBeVisible();
   await page.getByRole("navigation",{name:"会員メニュー"}).getByRole("link",{name:"FAQ"}).click();
   await expect(page.getByRole("heading",{name:"よくある質問"})).toBeVisible();
+  const categoryBox=await page.locator(".faq-category").last().boundingBox();
+  const questionBox=await page.locator(".faq-question-panel").boundingBox();
+  expect(questionBox!.y).toBeGreaterThanOrEqual(categoryBox!.y+categoryBox!.height);
 });
 
 test("会員ホーム・イベントナビ・イベント詳細を表示できる",async({page},testInfo)=>{
@@ -141,4 +144,48 @@ test("会員ホーム・イベントナビ・イベント詳細を表示でき�
   await page.locator(".event-gallery-card").first().click();
   await expect(page.getByRole("dialog",{name:/初心者歓迎 テニス練習会/})).toBeVisible();
   await page.screenshot({path:testInfo.outputPath("event-detail.png"),fullPage:true});
+});
+
+test("プロフィールメニューはデスクトップの会員ナビと重ならない",async({page},testInfo)=>{
+  test.skip(testInfo.project.name==="mobile","モバイルでは下部ナビを使用するため");
+  await page.goto("/faq");
+  await page.locator(".user-menu > summary").click();
+  const menu=page.locator(".user-menu-panel");
+  const tabs=page.locator(".member-tabs");
+  await expect(menu).toBeVisible();
+  const menuBox=await menu.boundingBox();
+  const tabsBox=await tabs.boundingBox();
+  expect(menuBox!.y).toBeGreaterThanOrEqual(tabsBox!.y+tabsBox!.height);
+});
+
+test("スマホのプロフィールメニューをプロフィールアイコンより前面に表示する",async({page},testInfo)=>{
+  test.skip(testInfo.project.name!=="mobile","モバイル表示専用の確認");
+  await page.goto("/profile");
+  await page.locator(".user-menu > summary").click();
+  const menu=page.locator(".user-menu-panel");
+  const logout=menu.getByRole("button",{name:"ログアウト"});
+  await expect(logout).toBeVisible();
+  await expect(logout).toContainText("ログアウト");
+  const menuBox=await menu.boundingBox();
+  const avatarBox=await page.locator(".profile-avatar").boundingBox();
+  const overlap={
+    left:Math.max(menuBox!.x,avatarBox!.x),right:Math.min(menuBox!.x+menuBox!.width,avatarBox!.x+avatarBox!.width),
+    top:Math.max(menuBox!.y,avatarBox!.y),bottom:Math.min(menuBox!.y+menuBox!.height,avatarBox!.y+avatarBox!.height),
+  };
+  expect(overlap.right).toBeGreaterThan(overlap.left);
+  expect(overlap.bottom).toBeGreaterThan(overlap.top);
+  const menuIsOnTop=await page.evaluate(({x,y})=>Boolean(document.elementFromPoint(x,y)?.closest(".user-menu-panel")),{
+    x:(overlap.left+overlap.right)/2,y:(overlap.top+overlap.bottom)/2,
+  });
+  expect(menuIsOnTop).toBe(true);
+  await page.screenshot({path:testInfo.outputPath("mobile-user-menu.png")});
+});
+
+test("プロフィールの所属情報を中央揃えの段落で表示する",async({page})=>{
+  await page.goto("/profile");
+  const affiliation=page.locator(".profile-affiliation");
+  await expect(affiliation.getByText("早稲田大学",{exact:true})).toBeVisible();
+  await expect(affiliation.getByText("法学部",{exact:true})).toBeVisible();
+  await expect(affiliation.locator("p")).toHaveCount(3);
+  await expect(affiliation).toHaveCSS("text-align","center");
 });
