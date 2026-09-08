@@ -13,16 +13,17 @@ test("会員がログインして対象イベントを予約・キャンセル�
   await page.getByRole("button", { name: "ログイン" }).click();
   await expect(page).toHaveURL(/\/home(?:\?|$)/);
 
-  let eventCard = page.locator(".event-card").filter({ hasText: eventTitle! });
+  await page.goto("/events");
+  const eventCard = page.locator(".event-gallery-card").filter({ hasText: eventTitle! });
   await expect(eventCard).toHaveCount(1);
+  await eventCard.click();
+  const detail = page.getByRole("dialog", { name: new RegExp(eventTitle!) });
+  await expect(detail).toBeVisible();
   page.once("dialog", (dialog) => dialog.accept());
-  await eventCard.getByRole("button", { name: "予約する" }).click();
-  await expect(page).toHaveURL(/\/home\?reserved=/);
-  await expect(page.getByText("参加予約を登録し、カレンダーへ反映しました。")).toBeVisible();
+  await detail.getByRole("button", { name: "予約する" }).click();
+  await expect(detail.getByRole("button", { name: "予約済み" })).toBeVisible();
 
-  eventCard = page.locator(".event-card").filter({ hasText: eventTitle! });
   page.once("dialog", (dialog) => dialog.accept());
-  await eventCard.getByRole("button", { name: "予約済み" }).click();
-  await expect(page).toHaveURL(/\/home\?cancelled=1/);
-  await expect(page.getByText("参加予約をキャンセルしました。")).toBeVisible();
+  await detail.getByRole("button", { name: "予約済み" }).click();
+  await expect(detail.getByRole("button", { name: "予約する" })).toBeVisible();
 });

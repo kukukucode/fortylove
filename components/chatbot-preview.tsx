@@ -28,6 +28,7 @@ export function ChatbotPreview({ mode = "preview", onClose, active = true }: { m
   const titleId = useId();
   const inputId = useId();
   const messagesRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const history = useRef<Partial<Record<"admin" | "member", Message[]>>>({});
   const requestLock = useRef(false);
   const [testAudience, setTestAudience] = useState<"admin" | "member">("member");
@@ -108,7 +109,21 @@ export function ChatbotPreview({ mode = "preview", onClose, active = true }: { m
     event.preventDefault();
     const value = message.trim();
     const selected = /^\d$/.test(value) ? pendingChoices[Number(value) - 1] : undefined;
+    if (pendingChoices.length && Number(value) === pendingChoices.length + 1) {
+      chooseOther();
+      return;
+    }
     await requestAnswer(value, selected?.title ?? value, selected?.id);
+  }
+
+  function chooseOther() {
+    setPendingChoices([]);
+    setMessage("");
+    setMessages((current) => [
+      ...current.map((item) => item.choices ? { ...item, choices: undefined } : item),
+      { role: "bot", text: "知りたい内容をもう少し具体的に入力してください。" },
+    ]);
+    requestAnimationFrame(() => inputRef.current?.focus());
   }
 
   function declineEscalation(index: number) {
@@ -179,7 +194,10 @@ export function ChatbotPreview({ mode = "preview", onClose, active = true }: { m
           >
             <span>{choice.label}</span>{choice.title}
           </button>)}
-          <small>ボタンを押すか、番号を入力してください。</small>
+          <button type="button" disabled={sending} onClick={chooseOther}>
+            <span>{item.choices.length + 1}</span>その他（チャットに入力）
+          </button>
+          <small>ボタンを押すか、番号を入力してください。「その他」では質問を詳しく入力できます。</small>
         </div>}
         {item.generalTicket && <button type="button" className="general-answer-button" disabled={sending} onClick={() => requestAnswer("一般的な回答を見る", item.question, undefined, item.generalTicket)}>一般的な回答を見る{mode !== "preview" && "（利用回数1件）"}</button>}
         {item.offerEscalation && !item.decided && <div className="escalation-choice">
@@ -196,11 +214,12 @@ export function ChatbotPreview({ mode = "preview", onClose, active = true }: { m
     <form onSubmit={send} autoComplete="off">
       <label className="sr-only" htmlFor={inputId}>質問</label>
       <textarea
+        ref={inputRef}
         id={inputId}
         value={message}
         onChange={(event) => setMessage(event.target.value)}
         maxLength={500}
-        placeholder={pendingChoices.length ? "番号でも選べます（例：2）" : "例：次の新歓はいつ？"}
+        placeholder={pendingChoices.length ? `1〜${pendingChoices.length + 1}から選択、または質問を入力` : "例：次の新歓はいつ？"}
         rows={1}
         autoComplete="off"
         onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }}

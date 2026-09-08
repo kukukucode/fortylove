@@ -59,7 +59,8 @@ export function UniversityFields({
     setDepartment(visibleDepartment(values.department_choice));
   }, [restoreDraft]);
 
-  const departments = university && faculty ? schools[university][faculty] : [];
+  const faculties = university ? schools[university] ?? {} : {};
+  const departments = faculty ? faculties[faculty] ?? [] : [];
   const hasDepartmentChoice = departments.length > 0;
 
   return <>
@@ -80,7 +81,7 @@ export function UniversityFields({
         setDepartment("");
       }} required>
         <option value="">選択してください</option>
-        {Object.keys(schools[university]).map((name) => <option key={name}>{name}</option>)}
+        {Object.keys(faculties).map((name) => <option key={name}>{name}</option>)}
       </select>
     </label>}
     <input type="hidden" name="faculty" value={faculty} />

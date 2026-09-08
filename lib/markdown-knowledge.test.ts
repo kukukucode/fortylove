@@ -18,4 +18,21 @@ describe("Markdown knowledge import", () => {
     const result = parseMarkdownKnowledge("## 連絡方法\n公開情報です。\n```\nSECRET=hidden\n```", "案内");
     expect(result[0].content).not.toContain("SECRET");
   });
+
+  it("HTMLコメントとタグを境界で再構成せず除外する", () => {
+    const result = parseMarkdownKnowledge(
+      "## 安全な案内\n回答前<!-- <script>hidden</script> -->回答後<strong>強調</strong>",
+      "案内",
+    );
+    expect(result[0].content).toContain("回答前 回答後 強調");
+    expect(result[0].content).not.toContain("<!--");
+    expect(result[0].content).not.toContain("<script");
+    expect(result[0].content).not.toContain("<strong");
+    expect(result[0].content).not.toContain("hidden");
+  });
+
+  it("閉じられていないコメントやタグより後を回答に含めない", () => {
+    expect(parseMarkdownKnowledge("## 質問\n公開<!-- 非公開", "案内")[0].content).toBe("公開");
+    expect(parseMarkdownKnowledge("## 質問\n公開<script 非公開", "案内")[0].content).toBe("公開");
+  });
 });

@@ -29,8 +29,14 @@ select:disabled {
   color: var(--muted);
   opacity: 1;
 }
-.brand-mark svg { width: 30px; height: 30px; color: var(--lime); }
 .profile-status .primary { width: auto; }
+.profile-card { position: relative; z-index: 0; }
+.profile-affiliation { margin: 8px 0 0; color: var(--muted); text-align: center; }
+.profile-affiliation p { margin: 3px 0; line-height: 1.55; }
+.profile-affiliation .profile-grade { margin-top: 7px; font-size: 13px; }
+.profile-mode-label { margin: 16px 0 0; color: var(--green); font-size: 11px; font-weight: 800; letter-spacing: .16em; }
+.profile-empty-message { margin: 18px 0; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: #f8faf9; text-align: center; }
+.profile-empty-message p { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
 .success-message {
   padding: 12px 14px;
   margin: 18px 0;
@@ -90,7 +96,6 @@ select:disabled {
 .calendar-day.today .calendar-date { background: var(--green); color: white; }
 .calendar-events { display: grid; gap: 4px; margin-top: 5px; }
 .calendar-events a { min-width: 0; padding: 5px 6px; border-radius: 6px; background: #eaf1ec; color: var(--green); font-size: 10px; font-weight: 700; }
-.calendar-events a.social-event { background: #f2ead9; color: #80633a; }
 .calendar-events time { display: block; font-size: 9px; opacity: .72; }
 .calendar-events span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .calendar-event-location { margin-top: 2px; font-size: 9px; font-weight: 500; opacity: .72; }
@@ -115,11 +120,10 @@ select:disabled {
 .avatar.has-image,
 .profile-avatar.has-image { background: transparent; }
 .avatar-content { display: grid; width: 100%; height: 100%; place-items: center; border-radius: inherit; overflow: hidden; }
-.mobile-menu-label { display: none; }
 .user-menu { position: relative; }
 .user-menu-panel {
   position: absolute;
-  z-index: 20;
+  z-index: 70;
   top: 48px;
   right: 0;
   width: 220px;
@@ -200,8 +204,10 @@ select:disabled {
 .admin-event-stats > span { display: grid; text-align: center; }
 .admin-event-stats strong { font-size: 24px; }
 .admin-event-stats small { color: var(--muted); }
-.admin-event-stats .event-delete { width: auto; padding: 8px 14px; margin-top: 4px; }
-.admin-event-stats .event-edit-trigger { width: auto; padding: 8px 14px; margin-top: 4px; }
+.admin-event-actions { display: flex; align-items: center; gap: 8px; }
+.admin-event-actions > form { margin: 0; }
+.admin-event-actions .event-delete,
+.admin-event-actions .event-edit-trigger { width: 78px; min-height: 38px; margin: 4px 0 0; padding: 8px 14px; }
 .event-status-tabs { display: flex; gap: 8px; margin: 0 0 16px; padding: 5px; border: 1px solid var(--line); border-radius: 11px; background: white; }
 .event-status-tabs a { flex: 1; padding: 10px 14px; border-radius: 7px; color: var(--muted); font-size: 12px; font-weight: 700; text-align: center; }
 .event-status-tabs a.active { background: var(--ink); color: white; }
@@ -225,6 +231,10 @@ select:disabled {
 .attendance-attributes .status-owned, .attendance-attributes .status-needed { width: fit-content; }
 .attendance-empty { padding: 16px 0 2px; color: var(--muted); }
 .admin-event { min-width: 0; }
+.grid-form > label,
+.event-edit-modal .grid-form > label { min-width: 0; }
+input[type="datetime-local"] { min-width: 0; max-width: 100%; }
+.admin-participation-page { max-width: 1200px; }
 .admin-event > div,
 .admin-event details,
 .admin-event h3,
@@ -245,7 +255,7 @@ select:disabled {
 .faq-item summary::after { content: "＋"; position: absolute; right: 20px; color: var(--green); }
 .faq-item[open] summary::after { content: "−"; }
 .faq-item p { margin: 0; padding: 0 20px 20px; color: var(--muted); line-height: 1.85; white-space: pre-wrap; }
-.faq-question-panel { margin-bottom: 34px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.faq-question-panel { margin: 34px 0 0; padding: 18px 20px; border: 1px solid var(--line); border-radius: 12px; background: white; }
 .faq-question-panel summary { cursor: pointer; color: var(--green); font-weight: 700; }
 .faq-question-panel form { display: grid; gap: 12px; margin-top: 18px; }
 .faq-question-panel small { color: var(--muted); }
@@ -622,6 +632,7 @@ select:disabled {
   .pdf-modal header button, .pdf-modal header a { width: 38px !important; }
   .event-edit-modal { padding: 22px 16px; }
   .event-edit-actions { grid-template-columns: 1fr; }
+  input[type="datetime-local"] { display: block; width: 100%; min-inline-size: 0; max-inline-size: 100%; padding-right: 10px; padding-left: 10px; }
   .participation-calendar { margin: 0 0 34px; padding: 16px 10px; }
   .calendar-heading { align-items: flex-start; flex-direction: column; padding: 0 4px; }
   .calendar-controls { width: 100%; justify-content: space-between; }
@@ -646,11 +657,9 @@ select:disabled {
   .event-chip { display: inline-block; max-width: 100%; overflow-wrap: anywhere; }
   .membership-candidate-summary { grid-template-columns: 1fr; }
   .direct-membership-form > .primary { width: 100%; }
-  .user-menu .avatar { width: auto; height: 38px; padding: 0 11px; border-radius: 9px; background: var(--ink); }
-  .user-menu .avatar-content { display: none; }
-  .mobile-menu-label { display: flex; align-items: center; gap: 7px; color: white; font-size: 12px; }
-  .mobile-menu-label svg { width: 18px; height: 18px; }
+  .user-menu .avatar { width: 38px; height: 38px; padding: 0; border-radius: 50%; background: var(--ink); }
   .user-menu-panel { width: min(260px, calc(100vw - 32px)); }
+  .member-header .mobile-logout-form button { color: var(--ink); font-size: 14px; font-weight: 700; opacity: 1; }
   .admin-nav-desktop { display: none; }
   .admin-mobile-menu { display: block; }
   .admin-mobile-menu > summary { display: flex; align-items: center; justify-content: space-between; cursor: pointer; list-style: none; }
@@ -696,7 +705,11 @@ select:disabled {
   .chatbot-widget { right: 16px; bottom: 88px; }
   .chatbot-widget-window { bottom: 66px; }
   .admin-event { grid-template-columns: minmax(0, 1fr); padding: 16px; }
-  .admin-event-stats { justify-content: flex-start; flex-wrap: wrap; }
+  .admin-event-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 8px; align-items: end; }
+  .admin-event-actions { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; padding-top: 4px; border-top: 1px solid var(--line); }
+  .admin-event-actions > form { width: 100%; }
+  .admin-event-actions .event-delete,
+  .admin-event-actions .event-edit-trigger { width: 100%; min-height: 44px; margin: 0; }
   .admin-event details { grid-column: 1; }
   .attendance-attributes { grid-template-columns: 1fr 1fr; }
   .role-form .primary { width: 100%; }
@@ -709,4 +722,6 @@ select:disabled {
   .social-links { grid-template-columns: 1fr; }
   .footer-bottom { flex-direction: column; }
   .profile-card { margin-bottom: 100px; }
+  .admin-main { padding-bottom: 104px; }
+  .admin-shell .chatbot-widget { right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); }
 }

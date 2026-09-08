@@ -35,7 +35,12 @@ export async function POST(request: Request) {
           if (drafts.length > MARKDOWN_MAX_RECORDS) throw new Error(`1000件の上限を超えています。このファイルには${drafts.length.toLocaleString()}件のデータがあります。`);
           report({ name: file.name, state: "検索データ生成中", count: drafts.length });
           const embeddings = await embedTexts(drafts.map((draft) => `${draft.title}\n${draft.content}`), false,
-            (done) => report({ name: file.name, state: `検索データ生成中 ${done}/${drafts.length}`, count: drafts.length }));
+            (done) => report({ name: file.name, state: `検索データ生成中 ${done}/${drafts.length}`, count: drafts.length }),
+            ({ completed, delayMs, reason }) => report({
+              name: file.name,
+              state: `${reason === "rate_limit" ? "利用枠の回復" : "API再接続"}を待機中 ${completed}/${drafts.length}（約${Math.max(1, Math.ceil(delayMs / 1000))}秒）`,
+              count: drafts.length,
+            }));
           if (!connected) break;
           report({ name: file.name, state: "アップロード中" });
           const { error } = await client.rpc("replace_chatbot_source", {

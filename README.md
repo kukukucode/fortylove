@@ -60,19 +60,12 @@ pnpm build
 
 通常の変更は、上記をまとめて実行する`pnpm check`でも確認できます。ブラウザテストは`pnpm test:e2e`、Chatbot・FAQのPC／スマホ操作確認は`pnpm test:e2e:experience`を使用します。
 
-Pull RequestではLint・型検査・単体テストを常に実行し、変更内容に応じてDB統合テスト、ビルド、E2Eテストを追加します。`main`への反映時は全検査を実行します。
+Pull RequestではLint・型検査・単体テストを常に実行し、変更内容に応じてDB統合テスト、ビルド、E2Eテストを追加します。README・`docs/`配下・`.docx`だけの変更では重い検査を省略し、`main`への反映時は全検査を実行します。
 
 ## ドキュメント
 
-- [品質要件定義書](docs/quality-requirements/Fortylove_品質要件定義書.md)
-- [Chatbot・画面改善要件](docs/quality-requirements/Fortylove_改善要件書_20260906.md)
-- [Chatbot・FAQ改善の反映手順](docs/operations/chatbot-experience-rollout.md)
-- [監視・品質試験の導入手順](docs/operations/quality-rollout.md)
-- [データベース更新手順](docs/operations/database-migrations.md)
-- [本番環境の保留TODO](docs/operations/production-todo.md)
+要件と運用手順は[ドキュメント一覧](docs/README.md)から確認できます。
 
 ## セキュリティ
 
-- 認証情報、個人情報、本番環境の設定値をリポジトリへ記録しないでください。
-- 権限や外部サービスの設定は、必要な担当者だけが管理してください。
-- セキュリティ上の問題は公開Issueへ詳細を書かず、管理者へ個別に連絡してください。
+詳細は[セキュリティポリシー](SECURITY.md)を確認してください。

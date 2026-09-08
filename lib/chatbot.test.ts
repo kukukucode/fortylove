@@ -13,15 +13,15 @@ describe("chatbot matching", () => {
   it("イベント質問を識別する", () => expect(isEventQuestion("次の新歓はいつ？")).toBe(true));
   it("新歓の募集期間はイベント日程よりFAQを優先する", () => expect(isEventQuestion("新歓はいつまでですか？")).toBe(false));
   it("参加条件の質問をイベント質問と誤判定しない", () => expect(isEventQuestion("新歓は初心者でも参加できますか？")).toBe(false));
-  it("近い回答が複数ある曖昧な質問は最大3件を統合する", () => {
+  it("近い回答が複数ある曖昧な質問は最大3件の選択肢にする", () => {
     const records = [
       { ...knowledge[0], id: "fee", title: "会費", content: "会費の回答", keywords: ["費用"] },
       { ...knowledge[0], id: "annual", title: "年間費用", content: "年間費用の回答", keywords: ["費用"] },
       { ...knowledge[0], id: "event-fee", title: "イベント費", content: "イベント費の回答", keywords: ["費用"] },
     ];
     const decision = decideKnowledgeResponse("費用について知りたい", records);
-    expect(decision.kind).toBe("synthesize");
-    if (decision.kind === "synthesize") expect(decision.records).toHaveLength(3);
+    expect(decision.kind).toBe("choices");
+    if (decision.kind === "choices") expect(decision.records).toHaveLength(3);
   });
   it("複数の関心を含む質問はGemini統合対象にする", () => {
     const records = [

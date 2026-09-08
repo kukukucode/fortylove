@@ -14,6 +14,9 @@ test("未認証ユーザーを会員・管理画面からログインへ戻す",
   await page.goto("/home");
   await expect(page).toHaveURL(/\/login$/);
 
+  await page.goto("/events");
+  await expect(page).toHaveURL(/\/login$/);
+
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/login$/);
 });

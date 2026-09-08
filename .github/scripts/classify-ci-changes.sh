@@ -38,8 +38,8 @@ heavy_verify=false
 docs_only=true
 
 for file in "${changed_files[@]}"; do
-  case "${file}" in
-    README.md|docs/*)
+  case "${file,,}" in
+    readme.md|docs/*|*.docx)
       continue
       ;;
   esac

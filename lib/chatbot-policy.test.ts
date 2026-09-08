@@ -33,3 +33,40 @@ it("Embedding生成の部分失敗を成功として扱わない", async () => {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ embeddings: [{ values: [1, 2] }] }), { status: 200 })));
   await expect(embedTexts(["資料"])).rejects.toThrow();
 });
+it("133件のEmbeddingをAPI負荷を抑えた小さい単位で生成する", async () => {
+  vi.stubEnv("GEMINI_API_KEY", "test");
+  const fetchMock = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+    const body = JSON.parse(String(init?.body)) as { requests: unknown[] };
+    return new Response(JSON.stringify({ embeddings: body.requests.map(() => ({ values: Array(768).fill(0.1) })) }), { status: 200 });
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  const progress: number[] = [];
+  const vectors = await embedTexts(Array.from({ length: 133 }, (_, index) => `回答${index}`), false, (count) => progress.push(count));
+  expect(vectors).toHaveLength(133);
+  expect(fetchMock).toHaveBeenCalledTimes(7);
+  expect(progress).toEqual([20, 40, 60, 80, 100, 120, 133]);
+});
+it("一時的な利用枠エラーは待機して再試行する", async () => {
+  vi.stubEnv("GEMINI_API_KEY", "test");
+  const vector = Array(768).fill(0.1);
+  const fetchMock = vi.fn()
+    .mockResolvedValueOnce(new Response(JSON.stringify({ error: { status: "RESOURCE_EXHAUSTED" } }), { status: 429, headers: { "Retry-After": "0" } }))
+    .mockResolvedValueOnce(new Response(JSON.stringify({ embeddings: [{ values: vector }] }), { status: 200 }));
+  vi.stubGlobal("fetch", fetchMock);
+  const retries: unknown[] = [];
+  await expect(embedTexts(["資料"], false, undefined, (retry) => retries.push(retry))).resolves.toEqual([vector]);
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  expect(retries).toEqual([{ completed: 0, delayMs: 0, reason: "rate_limit" }]);
+});
+it("API認証エラーを利用枠エラーと区別する", async () => {
+  vi.stubEnv("GEMINI_API_KEY", "test");
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: { status: "PERMISSION_DENIED" } }), { status: 403 })));
+  await expect(embedTexts(["資料"])).rejects.toThrow("Gemini APIキー");
+});
+it("通常チャット向け設定では利用枠エラーを待たずに終了する", async () => {
+  vi.stubEnv("GEMINI_API_KEY", "test");
+  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: { status: "RESOURCE_EXHAUSTED" } }), { status: 429 }));
+  vi.stubGlobal("fetch", fetchMock);
+  await expect(embedTexts(["質問"], true, undefined, undefined, { maxAttempts: 1, requestTimeoutMs: 4_000 })).rejects.toThrow("利用枠");
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+});

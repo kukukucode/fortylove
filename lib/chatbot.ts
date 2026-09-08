@@ -85,6 +85,7 @@ export function decideKnowledgeResponse(question: string, records: ChatbotKnowle
   const multiple = ranked.length > 1 && /(?:、|と|も|けど|ながら|それに|さらに|両方)/.test(question);
   const high = best.semantic >= KNOWLEDGE_THRESHOLDS.semanticHigh || best.score >= KNOWLEDGE_THRESHOLDS.high;
   if (high && close.length === 1 && !multiple) return { kind: "direct", record: best.record };
+  if (close.length > 1 && !multiple) return { kind: "choices", records: close.slice(0, 3).map((item) => item.record) };
   return { kind: "synthesize", records: ranked.slice(0, 3).map((item) => item.record) };
 }
 

@@ -20,7 +20,7 @@ vi.mock("@/lib/db", () => ({
   }),
 }));
 
-import { requireAdmin, requireSession, requireSuperAdmin } from "./action-context";
+import { requireAdmin, requireMember, requireParticipant, requireSession, requireSuperAdmin } from "./action-context";
 
 const session = { id: "550e8400-e29b-41d4-a716-446655440000" };
 
@@ -57,5 +57,19 @@ describe("Server Action authorization boundary", () => {
 
     mocks.single.mockResolvedValue({ data: { ...session, name: "Owner", role: "super_admin" } });
     await expect(requireSuperAdmin()).resolves.toMatchObject({ role: "super_admin" });
+  });
+
+  it("reserves profiles for members and event participation for members and super admins", async () => {
+    mocks.getSession.mockResolvedValue({ ...session, role: "admin" });
+    await expect(requireMember()).rejects.toThrow("REDIRECT:/admin");
+    await expect(requireParticipant()).rejects.toThrow("REDIRECT:/admin");
+
+    mocks.getSession.mockResolvedValue({ ...session, role: "member" });
+    await expect(requireMember()).resolves.toMatchObject({ role: "member" });
+    await expect(requireParticipant()).resolves.toMatchObject({ role: "member" });
+
+    mocks.getSession.mockResolvedValue({ ...session, role: "super_admin" });
+    await expect(requireMember()).rejects.toThrow("REDIRECT:/admin");
+    await expect(requireParticipant()).resolves.toMatchObject({ role: "super_admin" });
   });
 });
