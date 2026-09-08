@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { clearSession, setSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { memberProfileInputSchema, uuidSchema } from "@/lib/input-validation";
-import { requireSession } from "@/lib/server/action-context";
+import { requireMember, requireParticipant } from "@/lib/server/action-context";
 import { parseActionInput } from "@/lib/server/action-input";
 import { formText } from "@/lib/server/form-data";
 import { removeAvatarFiles, uploadAvatar } from "@/lib/server/avatar-service";
@@ -14,7 +14,7 @@ import { configuredSupabaseRole } from "@/lib/server/supabase-diagnostics";
 export type ReservationResult = { error?: "reservation" | "full" | "cancel-deadline" };
 
 export async function reserve(formData: FormData): Promise<ReservationResult> {
-  const user = await requireSession();
+  const user = await requireParticipant();
   const parsed = uuidSchema.safeParse(formText(formData, "event_id"));
   if (!parsed.success) return { error: "reservation" };
   const eventId = parsed.data;
@@ -27,7 +27,7 @@ export async function reserve(formData: FormData): Promise<ReservationResult> {
 }
 
 export async function cancelReservation(formData: FormData): Promise<ReservationResult> {
-  const user = await requireSession();
+  const user = await requireParticipant();
   const parsed = uuidSchema.safeParse(formText(formData, "event_id"));
   if (!parsed.success) return { error: "reservation" };
   const eventId = parsed.data;
@@ -40,7 +40,7 @@ export async function cancelReservation(formData: FormData): Promise<Reservation
 }
 
 export async function deleteOwnAccount() {
-  const user = await requireSession();
+  const user = await requireMember();
   if (!await archiveAndDeleteMember(user.id, user.id, "self")) redirect("/profile?error=delete");
   await removeAvatarFiles(user.id);
   await clearSession();
@@ -48,7 +48,7 @@ export async function deleteOwnAccount() {
 }
 
 export async function updateProfile(formData: FormData) {
-  const user = await requireSession();
+  const user = await requireMember();
   const input = parseActionInput(memberProfileInputSchema, {
     name: formText(formData, "name"),
     university: formText(formData, "university"),

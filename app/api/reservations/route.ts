@@ -14,7 +14,9 @@ export async function POST(request: NextRequest) {
   } catch { return NextResponse.json({ error: "forbidden" }, { status: 403 }); }
 
   const user = await getSession();
-  if (!user || user.role !== "member") return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!user || !["member", "super_admin"].includes(user.role)) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
   let body: { eventId?: unknown; operation?: unknown };
   try { body = await request.json(); }

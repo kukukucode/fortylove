@@ -8,6 +8,18 @@ export async function requireSession() {
   return session;
 }
 
+export async function requireMember() {
+  const session = await requireSession();
+  if (session.role !== "member") redirect("/admin");
+  return session;
+}
+
+export async function requireParticipant() {
+  const session = await requireSession();
+  if (session.role !== "member" && session.role !== "super_admin") redirect("/admin");
+  return session;
+}
+
 export async function requireAdmin() {
   const session = await requireSession();
   const { data: user } = await db().from("users").select("id,name,role").eq("id", session.id).single();

@@ -16,7 +16,9 @@ createServer(async (req,res) => {
   let data=[];
   if(url.pathname.endsWith('/users')) {
     const id=(url.searchParams.get('id') ?? '').replace('eq.','');
-    const user={id,name:'動作確認ユーザー',role:id.endsWith('002')?'member':'super_admin',session_version:1,university:'早稲田大学',faculty:'法学部',grade:1};
+    const empty=id.endsWith('003');
+    const member=id.endsWith('002')||empty;
+    const user={id,name:'動作確認ユーザー',role:member?'member':'super_admin',session_version:1,university:empty?'':'早稲田大学',faculty:empty?'':'法学部',department:'',grade:empty?null:1,has_racket:false};
     data=req.headers.accept?.includes('object')?user:[user];
   } else if(url.pathname.endsWith('/app_settings')) data=req.headers.accept?.includes('object')?{id:1,recruiting_open:false,chatbot_admin_enabled:false,chatbot_member_enabled:true,chatbot_admin_sources:['admin.md'],chatbot_member_sources:['member.md']}:[{id:1,recruiting_open:false,chatbot_admin_enabled:false,chatbot_member_enabled:true,chatbot_admin_sources:['admin.md'],chatbot_member_sources:['member.md']}];
   else if(url.pathname.endsWith('/events')) data=events;
