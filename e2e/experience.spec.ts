@@ -89,7 +89,8 @@ test("一般利用画面は内部情報を隠し、一般回答は押下後の�
   await dialog.getByText("利用について",{exact:true}).click(); await expect(dialog.getByText(/外部AIサービスを利用する場合/)).toBeVisible();
 });
 
-test("画面遷移中は進行表示が出て完了後に消える",async({page})=>{
+test("画面遷移中は進行表示が出て完了後に消える",async({page,context})=>{
+  await useExperienceSession(context,"20000000-0000-4000-8000-000000000002");
   await page.goto("/home");
   await page.route("**/faq?*",async(route)=>{await new Promise(resolve=>setTimeout(resolve,1200));await route.continue();});
   await page.getByRole("navigation",{name:"会員メニュー"}).getByRole("link",{name:"FAQ"}).click();
@@ -123,7 +124,8 @@ test("取り込み前に1001件超過を表示し送信しない",async({page})=
   await expect(page.getByRole("button",{name:"アップロード・再試行"})).toBeDisabled();
 });
 
-test("受付停止は新規登録のみ・FAQを会員ナビから開ける",async({page},testInfo)=>{
+test("受付停止は新規登録のみ・FAQを会員ナビから開ける",async({page,context},testInfo)=>{
+  await useExperienceSession(context,"20000000-0000-4000-8000-000000000002");
   await page.goto("/register");
   await expect(page.getByRole("heading",{name:"今年度の新歓は終了しました！"})).toBeVisible();
   await expect(page.locator("#registration-form")).toHaveCount(0);
@@ -137,12 +139,14 @@ test("受付停止は新規登録のみ・FAQを会員ナビから開ける",asy
   expect(questionBox!.y).toBeGreaterThanOrEqual(categoryBox!.y+categoryBox!.height);
 });
 
-test("会員ホーム・イベントナビ・イベント詳細を表示できる",async({page},testInfo)=>{
+test("会員ホーム・イベントナビ・イベント詳細を表示できる",async({page,context},testInfo)=>{
+  await useExperienceSession(context,"20000000-0000-4000-8000-000000000002");
   await page.goto("/home");
   await expect(page.getByRole("heading",{name:"次の参加予定"})).toBeVisible();
   await page.screenshot({path:testInfo.outputPath("member-home.png"),fullPage:true});
   await page.getByRole("navigation",{name:"会員メニュー"}).getByRole("link",{name:"イベント"}).click();
-  await expect(page.getByRole("heading",{name:"イベント一覧"})).toBeVisible();
+  await expect(page).toHaveURL(/\/events(?:#|$)/,{timeout:20_000});
+  await expect(page.getByRole("heading",{name:"イベント一覧"})).toBeVisible({timeout:20_000});
   await expect(page.locator(".event-gallery-card")).toHaveCount(3);
   await page.screenshot({path:testInfo.outputPath("events.png"),fullPage:true});
   await page.locator(".event-gallery-card").first().click();
@@ -150,8 +154,9 @@ test("会員ホーム・イベントナビ・イベント詳細を表示でき�
   await page.screenshot({path:testInfo.outputPath("event-detail.png"),fullPage:true});
 });
 
-test("プロフィールメニューはデスクトップの会員ナビと重ならない",async({page},testInfo)=>{
+test("プロフィールメニューはデスクトップの会員ナビと重ならない",async({page,context},testInfo)=>{
   test.skip(testInfo.project.name==="mobile","モバイルでは下部ナビを使用するため");
+  await useExperienceSession(context,"20000000-0000-4000-8000-000000000002");
   await page.goto("/faq");
   await page.locator(".user-menu > summary").click();
   const menu=page.locator(".user-menu-panel");
