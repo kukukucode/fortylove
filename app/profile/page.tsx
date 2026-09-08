@@ -15,12 +15,16 @@ export const dynamic = "force-dynamic";
 export default async function Profile({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {
   const session = await getSession();
   if (!session) redirect("/login");
+  if (session.role !== "member") redirect("/admin");
   const { saved, error } = await searchParams;
   const client = db();
   const [{ data: user }, { data: settings }] = await Promise.all([
     client.from("users").select("*").eq("id", session.id).single(),
     client.from("app_settings").select("chatbot_member_enabled").eq("id", 1).maybeSingle(),
   ]);
+  const rawGrade = Number(user?.grade);
+  const grade = Number.isInteger(rawGrade) && rawGrade >= 1 ? Math.min(rawGrade, 5) : "";
+  const profileComplete = Boolean(user?.university && user?.faculty && grade);
   return <main className="member-shell">
     <MemberHeader active="profile" name={session.name} avatarUrl={user?.avatar_url} />
     <section className="profile-card">
@@ -28,21 +32,24 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
         // eslint-disable-next-line @next/next/no-img-element -- Public Supabase avatar URLs are already resized by CSS and must support the configured project host.
         <img src={user.avatar_url} alt="" />
       ) : session.name[0]}</div>
+      <p className="profile-mode-label">{profileComplete ? "PROFILE" : "CREATE PROFILE"}</p>
       <h1>{session.name}</h1>
-      <div className="profile-affiliation">
+      {(user?.university || user?.faculty || grade) && <div className="profile-affiliation">
         {user?.university && <p>{user.university}</p>}
         {user?.faculty && <p>{user.faculty}</p>}
         {visibleDepartment(user?.department) && <p>{visibleDepartment(user?.department)}</p>}
-        <p className="profile-grade">{Number(user?.grade) >= 5 ? "4年以上" : `${user?.grade}年`}</p>
-      </div>
+        {grade && <p className="profile-grade">{Number(grade) >= 5 ? "4年以上" : `${grade}年`}</p>}
+      </div>}
+      {!profileComplete && <div className="profile-empty-message"><strong>プロフィールを作成しましょう</strong><p>大学・学部・学年を入力すると、イベント参加時に管理者が確認できます。</p></div>}
       {saved && <div className="success-message">プロフィールを更新しました。</div>}
       {error && <div className="alert">{error === "avatar-size" ? "画像は2MB以下にしてください。" : error === "avatar-type" ? "JPEG・PNG・WebP・GIF画像を選択してください。" : error === "avatar-upload" ? "画像をアップロードできませんでした。" : error === "avatar-column" ? "Supabaseに画像保存用の設定がありません。管理者に確認してください。" : error === "delete" ? "退会処理ができませんでした。" : "更新できませんでした。もう一度お試しください。"}</div>}
       <form action={updateProfile} className="profile-edit-form"><FormFeedback />
         <AvatarInput />
-        <label className="full">名前<input name="name" defaultValue={user?.name} required /></label>
+        <label className="full">名前<input name="name" defaultValue={user?.name ?? session.name} required /></label>
         <UniversityFields initialUniversity={user?.university} initialFaculty={user?.faculty} initialDepartment={user?.department} restoreDraft={false} />
         <label>学年
-          <select name="grade" defaultValue={Number(user?.grade) >= 5 ? 5 : user?.grade} required>
+          <select name="grade" defaultValue={grade} required>
+            {!grade && <option value="" disabled>選択してください</option>}
             <option value="1">1年</option><option value="2">2年</option><option value="3">3年</option>
             <option value="4">4年</option><option value="5">4年以上</option>
           </select>
@@ -56,7 +63,7 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
             <option value="false">所持していない</option>
           </select>
         </label>
-        <button className="primary full">プロフィールを保存</button>
+        <button className="primary full">{profileComplete ? "プロフィールを保存" : "プロフィールを作成"}</button>
       </form>
       <section className="withdraw-panel"><strong>退会手続き</strong><form action={deleteOwnAccount}><FormFeedback /><ConfirmSubmitButton className="danger" message="退会するとアカウントと予約情報が削除され、元に戻せません。本当に退会しますか？">退会してアカウントを削除</ConfirmSubmitButton></form></section>
       <form action={logout}><FormFeedback /><ConfirmSubmitButton className="secondary" message="ログアウトしますか？">ログアウト</ConfirmSubmitButton></form>

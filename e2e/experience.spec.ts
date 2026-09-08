@@ -1,10 +1,14 @@
 import { createHmac } from "node:crypto";
-import { expect, test } from "@playwright/test";
+import { expect, test, type BrowserContext } from "@playwright/test";
 
-test.beforeEach(async ({ context }) => {
-  const payload=Buffer.from(JSON.stringify({id:"20000000-0000-4000-8000-000000000001",session_version:1,exp:Date.now()+3600000})).toString("base64url");
+async function useExperienceSession(context: BrowserContext, id: string) {
+  const payload=Buffer.from(JSON.stringify({id,session_version:1,exp:Date.now()+3600000})).toString("base64url");
   const signature=createHmac("sha256","experience-test-only-secret-with-32-characters").update(payload).digest("base64url");
   await context.addCookies([{name:"courtside_session",value:`${payload}.${signature}`,domain:"127.0.0.1",path:"/"}]);
+}
+
+test.beforeEach(async ({ context }) => {
+  await useExperienceSession(context,"20000000-0000-4000-8000-000000000001");
 });
 
 test("super_adminの常設チャットで選択肢・追従・入力消去・会話保持",async({page},testInfo)=>{
@@ -160,6 +164,7 @@ test("プロフィールメニューはデスクトップの会員ナビと重�
 
 test("スマホのプロフィールメニューをプロフィールアイコンより前面に表示する",async({page},testInfo)=>{
   test.skip(testInfo.project.name!=="mobile","モバイル表示専用の確認");
+  await useExperienceSession(page.context(),"20000000-0000-4000-8000-000000000002");
   await page.goto("/profile");
   await page.locator(".user-menu > summary").click();
   const menu=page.locator(".user-menu-panel");
@@ -181,11 +186,57 @@ test("スマホのプロフィールメニューをプロフィールアイコ�
   await page.screenshot({path:testInfo.outputPath("mobile-user-menu.png")});
 });
 
-test("プロフィールの所属情報を中央揃えの段落で表示する",async({page})=>{
+test("プロフィールの所属情報を中央揃えの段落で表示する",async({page,context})=>{
+  await useExperienceSession(context,"20000000-0000-4000-8000-000000000002");
   await page.goto("/profile");
   const affiliation=page.locator(".profile-affiliation");
   await expect(affiliation.getByText("早稲田大学",{exact:true})).toBeVisible();
   await expect(affiliation.getByText("法学部",{exact:true})).toBeVisible();
   await expect(affiliation.locator("p")).toHaveCount(3);
   await expect(affiliation).toHaveCSS("text-align","center");
+});
+
+test("adminにはプロフィールを表示せず未入力memberはプロフィールを作成できる",async({page,context})=>{
+  await page.goto("/admin");
+  await expect(page.getByRole("link",{name:"プロフィール編集"})).toHaveCount(0);
+  await page.goto("/profile");
+  await expect(page).toHaveURL(/\/admin$/);
+
+  await useExperienceSession(context,"20000000-0000-4000-8000-000000000003");
+  await page.goto("/profile");
+  await expect(page.getByText("プロフィールを作成しましょう")).toBeVisible();
+  await expect(page.getByRole("button",{name:"プロフィールを作成"})).toBeVisible();
+  await expect(page.locator('select[name="grade"]')).toHaveValue("");
+});
+
+test("super_adminは管理画面からイベント参加ページを開ける",async({page},testInfo)=>{
+  await page.goto("/admin/participation");
+  await expect(page.getByRole("heading",{name:"イベントに参加"})).toBeVisible();
+  await expect(page.locator(".event-gallery-card")).toHaveCount(3);
+  await page.locator(".event-gallery-card").first().click();
+  await expect(page.getByRole("dialog",{name:/初心者歓迎 テニス練習会/})).toBeVisible();
+  await page.screenshot({path:testInfo.outputPath("super-admin-participation.png"),fullPage:true});
+});
+
+test("スマホのイベント管理で日時入力が枠内に収まる",async({page},testInfo)=>{
+  test.skip(testInfo.project.name!=="mobile","モバイル表示専用の確認");
+  await page.goto("/admin/events");
+  await page.locator(".create-panel > summary").click();
+  for (const name of ["starts_at","ends_at"]) {
+    const input=page.locator(`input[name="${name}"]`).first();
+    const inputBox=await input.boundingBox();
+    const labelBox=await input.locator("xpath=..").boundingBox();
+    expect(inputBox!.x).toBeGreaterThanOrEqual(labelBox!.x-1);
+    expect(inputBox!.x+inputBox!.width).toBeLessThanOrEqual(labelBox!.x+labelBox!.width+1);
+  }
+
+  const lastActions=page.locator(".admin-event-actions").last();
+  await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
+  const editBox=await lastActions.getByRole("button",{name:"編集"}).boundingBox();
+  const deleteBox=await lastActions.getByRole("button",{name:"削除"}).boundingBox();
+  const chatbotBox=await page.getByRole("button",{name:"チャットを開く"}).boundingBox();
+  expect(Math.abs(editBox!.width-deleteBox!.width)).toBeLessThanOrEqual(1);
+  const overlaps=!(deleteBox!.x+deleteBox!.width<=chatbotBox!.x||chatbotBox!.x+chatbotBox!.width<=deleteBox!.x||deleteBox!.y+deleteBox!.height<=chatbotBox!.y||chatbotBox!.y+chatbotBox!.height<=deleteBox!.y);
+  expect(overlaps).toBe(false);
+  await page.screenshot({path:testInfo.outputPath("mobile-admin-event-actions.png"),fullPage:true});
 });
