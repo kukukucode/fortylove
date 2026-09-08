@@ -39,7 +39,7 @@ jobs:
       PGPASSWORD: postgres
       PGDATABASE: fortylove_test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Classify changed files
@@ -108,7 +108,7 @@ jobs:
       PGPASSWORD: postgres
       PGDATABASE: fortylove_quality
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Classify changed files
