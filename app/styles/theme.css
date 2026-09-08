@@ -197,6 +197,7 @@ textarea:focus {
 .footer-social > small,
 .social-links small,
 .footer-bottom { color: var(--muted); }
+.site-footer .social-link-disabled small { color: var(--muted); }
 .footer-nav a { color: var(--ink); }
 .footer-nav a:hover { color: var(--green); }
 .social-links > a,
