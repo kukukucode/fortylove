@@ -1,0 +1,33 @@
+.primary {
+  background: linear-gradient(135deg, var(--green), #4266d0);
+  box-shadow: 0 8px 20px rgba(51, 78, 172, .2);
+}
+.primary:hover { background: linear-gradient(135deg, #263f99, #385dc9); }
+.reserve {
+  border: 0;
+  background: var(--lime);
+  color: #12363a;
+  box-shadow: 0 8px 18px rgba(0, 194, 168, .2);
+}
+.booked {
+  border-color: #b9e8df;
+  background: #e9fbf7;
+  color: #087968;
+}
+.success-message { background: #e9fbf7; color: #087968; }
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(51, 78, 172, .12);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: transparent;
+  outline: 2px solid rgba(51, 78, 172, .48);
+  outline-offset: 1px;
+  box-shadow: none;
+}
