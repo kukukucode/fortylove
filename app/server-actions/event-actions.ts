@@ -11,7 +11,6 @@ import { formText } from "@/lib/server/form-data";
 import { isOwnedEventDocumentUploadPath, isValidEventDocumentName } from "@/lib/event-document-policy";
 import { attachUploadedEventDocument, EVENT_DOCUMENT_BUCKET, removeEventDocument, removeUploadedEventDocument } from "@/lib/server/event-documents";
 import {
-  attendanceInputSchema,
   createEventInputSchema,
   eventIdInputSchema,
   updateEventInputSchema,
@@ -95,19 +94,20 @@ export async function updateEvent(formData: FormData) {
   }
   const { event_id: eventId, capacity } = parsed.data;
   const client = db();
-  const { count } = await client.from("reservations").select("*", { count: "exact", head: true }).eq("event_id", eventId).eq("status", "reserved");
-  if (capacity < (count ?? 0)) {
+  const { data: result, error } = await client.rpc("update_event_metadata", {
+    p_actor: user.id,
+    p_event_id: eventId,
+    p_title: parsed.data.title,
+    p_starts_at: startsAt,
+    p_ends_at: endsAt,
+    p_location: parsed.data.location,
+    p_capacity: capacity,
+    p_description: parsed.data.description,
+    p_event_type: parsed.data.event_type,
+  });
+  if (error || result !== "updated") {
     if (uploaded.document) await removeUploadedEventDocument(uploaded.document.path, user.id);
-    redirect("/admin/events?error=capacity");
-  }
-  const { error } = await client.from("events").update({
-    title: parsed.data.title, starts_at: startsAt, ends_at: endsAt,
-    location: parsed.data.location, capacity, description: parsed.data.description,
-    event_type: parsed.data.event_type,
-  }).eq("id", eventId);
-  if (error) {
-    if (uploaded.document) await removeUploadedEventDocument(uploaded.document.path, user.id);
-    redirect("/admin/events?error=update");
+    redirect(`/admin/events?error=${result === "capacity" ? "capacity" : "update"}`);
   }
   if (uploaded.document) {
     const documentError = await attachUploadedEventDocument(eventId, user.id, uploaded.document.path, uploaded.document.name);
@@ -118,7 +118,6 @@ export async function updateEvent(formData: FormData) {
   } else if (parsed.data.remove_document && !await removeEventDocument(eventId)) {
     redirect("/admin/events?error=document-delete");
   }
-  await writeAuditLog(client, { actorId: user.id, action: "event.update", targetType: "event", targetId: eventId });
   revalidatePath("/home");
   redirect("/admin/events?updated=1");
 }
@@ -139,18 +138,4 @@ export async function deleteEvent(formData: FormData) {
   }
   if (document?.file_path) await client.storage.from(EVENT_DOCUMENT_BUCKET).remove([document.file_path]);
   await writeAuditLog(client, { actorId: user.id, action: "event.delete", targetType: "event", targetId: eventId });
-}
-
-export async function updateAttendance(formData: FormData) {
-  const user = await requireAdmin();
-  const { id: reservationId, status } = parseActionInput(
-    attendanceInputSchema,
-    { id: formText(formData, "id"), status: formText(formData, "status") },
-    "/admin/events?error=attendance",
-  );
-  const client = db();
-  const { error } = await client.from("reservations").update({ status }).eq("id", reservationId);
-  if (error) redirect("/admin/events?error=attendance");
-  await writeAuditLog(client, { actorId: user.id, action: "reservation.attendance.update", targetType: "reservation", targetId: reservationId });
-  redirect("/admin/events?attendance_updated=1");
 }

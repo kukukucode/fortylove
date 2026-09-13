@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { adminId, assertDb, eventId, loginAs, memberId, qualityDb } from "./quality-helpers";
+import { adminId, assertDb, eventId, loginAs, memberId, qualityDb, superAdminId } from "./quality-helpers";
 
 test.beforeAll(async () => {
   await assertDb(qualityDb.from("login_rate_limits").delete().neq("key_hash", ""));
@@ -62,10 +62,20 @@ test("実DB: memberの管理画面アクセスと古いセッションを拒否�
   await loginAs(page); await page.goto("/admin/events"); await expect(page).toHaveURL(/\/login$/);
   await loginAs(page, "Admin");
   const session = await page.context().cookies();
-  await assertDb(qualityDb.rpc("set_user_role", { p_user_id: adminId, p_role: "member" }));
+  await assertDb(qualityDb.rpc("set_user_role_atomic", {
+    p_actor: superAdminId,
+    p_user_id: adminId,
+    p_role: "member",
+  }));
   try {
     await page.context().addCookies(session); await page.goto("/admin/events"); await expect(page).toHaveURL(/\/login$/);
-  } finally { await assertDb(qualityDb.rpc("set_user_role", { p_user_id: adminId, p_role: "admin" })); }
+  } finally {
+    await assertDb(qualityDb.rpc("set_user_role_atomic", {
+      p_actor: superAdminId,
+      p_user_id: adminId,
+      p_role: "admin",
+    }));
+  }
 });
 
 test("実DB: super_adminの通知先設定は保存・監査される", async ({ page }) => {
