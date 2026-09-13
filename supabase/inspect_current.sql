@@ -85,8 +85,9 @@ required_functions(function_name) as (
     ('reserve_event'),
     ('archive_and_delete_member'),
     ('cancel_event_reservation'),
-    ('set_user_role'),
-    ('set_member_role'),
+    ('update_event_metadata'),
+    ('set_user_role_atomic'),
+    ('set_members_role_atomic'),
     ('replace_user_password'),
     ('promote_member_grades')
 ),

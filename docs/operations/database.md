@@ -10,7 +10,7 @@
 
 ## 適用
 
-1. 今回の既存環境更新では、SQL Editorで`supabase/manual/production_upgrade_20260905.sql`をファイル全体のまま実行する。
+1. 既存環境へ未適用のSQLを日付順に実行する。統合アップグレードが未適用なら、先に`supabase/manual/production_upgrade_20260905.sql`をファイル全体のまま実行し、その後`supabase/migrations/20260913_fix_p0_invariants.sql`までの未適用マイグレーションを実行する。
 2. エラーが出た場合は再実行せず、出力を保存する。スクリプト全体はトランザクションでロールバックされる。
 3. 成功後に`supabase/verify_production.sql`を実行し、全項目が`true`、重複パスが0件、適用バージョンが1件であることを確認する。
 4. 今後の更新では、未適用の`migrations/`だけをファイル名順に実行する。一度適用したファイルは編集しない。

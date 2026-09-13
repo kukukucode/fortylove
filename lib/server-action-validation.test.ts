@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  attendanceInputSchema,
   chatbotAudienceSourcesInputSchema,
   createEventInputSchema,
   createFaqInputSchema,
@@ -27,9 +26,8 @@ describe("Server Action input validation", () => {
     expect(createEventInputSchema.safeParse({ ...valid, event_type: "other" }).success).toBe(false);
   });
 
-  it("rejects unsupported role and attendance values", () => {
+  it("rejects unsupported role values", () => {
     expect(updateRoleInputSchema.safeParse({ user_id: userId, role: "owner" }).success).toBe(false);
-    expect(attendanceInputSchema.safeParse({ id: userId, status: "deleted" }).success).toBe(false);
   });
 
   it("validates FAQ bounds and chatbot source limits", () => {

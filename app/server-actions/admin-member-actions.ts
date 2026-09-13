@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { parseActionInput } from "@/lib/server/action-input";
 import { requireAdmin, requireSuperAdmin } from "@/lib/server/action-context";
-import { writeAuditLog, writeAuditLogs } from "@/lib/server/audit-log";
+import { writeAuditLog } from "@/lib/server/audit-log";
 import { removeAvatarFiles } from "@/lib/server/avatar-service";
 import { formText } from "@/lib/server/form-data";
 import { archiveAndDeleteMember } from "@/lib/server/member-account-service";
@@ -26,11 +26,12 @@ export async function updateUserRole(formData: FormData) {
   const { user_id: userId, role } = parsed.data;
 
   const client = db();
-  const { data: updated, error } = await client.rpc("set_user_role", { p_user_id: userId, p_role: role });
-  if (error || !updated) redirect("/admin/admins?error=role-update");
-  await writeAuditLog(client, {
-    actorId: actor.id, action: "user.role.update", targetType: "user", targetId: userId,
+  const { data: updated, error } = await client.rpc("set_user_role_atomic", {
+    p_actor: actor.id,
+    p_user_id: userId,
+    p_role: role,
   });
+  if (error || !updated) redirect("/admin/admins?error=role-update");
   redirect("/admin/admins?role_updated=1");
 }
 
@@ -42,12 +43,12 @@ export async function updateUsersRole(formData: FormData) {
   }, "/admin/admins?error=selection");
 
   const client = db();
-  const updates = await Promise.all(userIds.map((userId) =>
-    client.rpc("set_member_role", { p_user_id: userId, p_role: role })));
-  if (updates.some((result) => result.error || result.data !== true)) redirect("/admin/admins?error=role-update");
-  await writeAuditLogs(client, userIds.map((targetId) => ({
-    actorId: actor.id, action: "user.role.update", targetType: "user", targetId,
-  })));
+  const { data: updated, error } = await client.rpc("set_members_role_atomic", {
+    p_actor: actor.id,
+    p_user_ids: userIds,
+    p_role: role,
+  });
+  if (error || updated !== userIds.length) redirect("/admin/admins?error=role-update");
   redirect(`/admin/admins?role_updated=${userIds.length}`);
 }
 

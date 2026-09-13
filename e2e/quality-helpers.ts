@@ -10,6 +10,7 @@ const key = `${header}.${payload}.${createHmac("sha256", jwtSecret).update(`${he
 export const qualityDb = createClient("http://127.0.0.1:54331", key, { auth: { persistSession: false } });
 export const memberId = "70000000-0000-4000-8000-000000000001";
 export const adminId = "70000000-0000-4000-8000-000000000002";
+export const superAdminId = "70000000-0000-4000-8000-000000000003";
 export const eventId = "71000000-0000-4000-8000-000000000001";
 export async function loginAs(page: Page, role: "Member" | "Admin" | "Owner" = "Member") {
   await page.goto("/login");

@@ -84,13 +84,102 @@ $$;
 
 do $$
 declare
+  v_actor uuid;
   v_user uuid;
 begin
+  insert into users (name, password_hash, role) values ('P0 role actor', 'integration-test-hash', 'super_admin') returning id into v_actor;
   insert into users (name, password_hash) values ('P1 session', 'integration-test-hash') returning id into v_user;
-  if not set_user_role(v_user, 'admin') then raise exception 'role update failed'; end if;
+  if not set_user_role_atomic(v_actor, v_user, 'admin') then raise exception 'role update failed'; end if;
   if (select session_version from users where id = v_user) <> 2 then raise exception 'role update did not invalidate sessions'; end if;
+  if not exists (
+    select 1 from audit_logs
+    where actor_id = v_actor and action = 'user.role.update' and target_id = v_user
+  ) then raise exception 'role update audit is missing'; end if;
   if not replace_user_password(v_user, 'integration-test-replacement-hash') then raise exception 'password update failed'; end if;
   if (select session_version from users where id = v_user) <> 3 then raise exception 'password update did not invalidate sessions'; end if;
+end;
+$$;
+
+do $$
+declare
+  v_actor uuid;
+  v_member_a uuid;
+  v_member_b uuid;
+  v_audit_before integer;
+begin
+  insert into users (name, password_hash, role) values ('P0 bulk actor', 'integration-test-hash', 'super_admin') returning id into v_actor;
+  insert into users (name, password_hash) values ('P0 bulk member A', 'integration-test-hash') returning id into v_member_a;
+  insert into users (name, password_hash, role) values ('P0 bulk member B', 'integration-test-hash', 'admin') returning id into v_member_b;
+  select count(*)::integer into v_audit_before from audit_logs where actor_id = v_actor and action = 'user.role.update';
+
+  begin
+    perform set_members_role_atomic(v_actor, array[v_member_a, v_member_b], 'super_admin');
+    raise exception 'mixed bulk role update unexpectedly succeeded';
+  exception
+    when others then
+      if sqlerrm = 'mixed bulk role update unexpectedly succeeded' then raise; end if;
+  end;
+
+  if (select role from users where id = v_member_a) <> 'member' then raise exception 'bulk role update partially committed'; end if;
+  if (select session_version from users where id = v_member_a) <> 1 then raise exception 'partial role update invalidated a session'; end if;
+  if (select count(*) from audit_logs where actor_id = v_actor and action = 'user.role.update') <> v_audit_before then
+    raise exception 'failed bulk role update wrote audit rows';
+  end if;
+
+  update users set role = 'member' where id = v_member_b;
+  if set_members_role_atomic(v_actor, array[v_member_a, v_member_b], 'super_admin') <> 2 then
+    raise exception 'valid bulk role update returned an unexpected count';
+  end if;
+  if (select count(*) from users where id in (v_member_a, v_member_b) and role = 'super_admin' and session_version = 2) <> 2 then
+    raise exception 'valid bulk role update did not update every target';
+  end if;
+  if (select count(*) from audit_logs where actor_id = v_actor and action = 'user.role.update' and target_id in (v_member_a, v_member_b)) <> 2 then
+    raise exception 'bulk role audit count differs from update count';
+  end if;
+end;
+$$;
+
+do $$
+declare
+  v_actor uuid;
+  v_member_a uuid;
+  v_member_b uuid;
+  v_event uuid;
+begin
+  insert into users (name, password_hash, role) values ('P0 event actor', 'integration-test-hash', 'admin') returning id into v_actor;
+  insert into users (name, password_hash) values ('P0 event member A', 'integration-test-hash') returning id into v_member_a;
+  insert into users (name, password_hash) values ('P0 event member B', 'integration-test-hash') returning id into v_member_b;
+  insert into events (title, starts_at, ends_at, location, capacity)
+    values ('P0 event before', now() + interval '2 days', now() + interval '2 days 1 hour', 'court', 2)
+    returning id into v_event;
+  if reserve_event(v_member_a, v_event) <> 'reserved' then raise exception 'first event update fixture reservation failed'; end if;
+  if reserve_event(v_member_b, v_event) <> 'reserved' then raise exception 'second event update fixture reservation failed'; end if;
+
+  if update_event_metadata(
+    v_actor, v_event, 'P0 capacity rejected', now() + interval '2 days', now() + interval '2 days 1 hour',
+    'court', 1, '', 'tennis'
+  ) <> 'capacity' then raise exception 'event capacity was reduced below reserved count'; end if;
+  if (select title from events where id = v_event) <> 'P0 event before' then
+    raise exception 'rejected event update partially committed';
+  end if;
+
+  if update_event_metadata(
+    v_actor, v_event, 'P0 event after', now() + interval '2 days', now() + interval '2 days 1 hour',
+    'court 2', 2, 'updated', 'event'
+  ) <> 'updated' then raise exception 'valid event update failed'; end if;
+  if not exists (
+    select 1 from events
+    where id = v_event and title = 'P0 event after' and capacity = 2 and event_type = 'event'
+  ) then raise exception 'event metadata was not updated'; end if;
+  if not exists (
+    select 1 from audit_logs
+    where actor_id = v_actor and action = 'event.update' and target_id = v_event
+  ) then raise exception 'event update audit is missing'; end if;
+
+  if to_regprocedure('public.set_user_role(uuid,public.user_role)') is not null
+     or to_regprocedure('public.set_member_role(uuid,public.user_role)') is not null then
+    raise exception 'legacy unaudited role RPC remains available';
+  end if;
 end;
 $$;
 
