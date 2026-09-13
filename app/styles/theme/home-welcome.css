@@ -1,0 +1,97 @@
+.welcome {
+  color: #243451;
+  border-bottom-color: #dfe6fb;
+  background:
+    radial-gradient(circle at 76% 22%, rgba(0, 194, 168, .16), transparent 25%),
+    linear-gradient(122deg, #f1f4fb 0%, #e7edf9 58%, #dceafb 100%);
+}
+.welcome .green { color: var(--green); }
+.welcome p:last-child { color: #52617a; }
+.mini-court {
+  border-color: rgba(51, 78, 172, .28);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, .18);
+  box-shadow: 0 18px 45px rgba(51, 78, 172, .07);
+}
+.mini-court::before,
+.mini-court::after { content: none; }
+.mini-court .court-singles {
+  position: absolute;
+  top: 16px;
+  right: 0;
+  bottom: 16px;
+  left: 0;
+  width: auto;
+  height: auto;
+  border-top: 2px solid rgba(51, 78, 172, .22);
+  border-bottom: 2px solid rgba(51, 78, 172, .22);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.mini-court .court-service-box {
+  position: absolute;
+  top: 16px;
+  right: 24%;
+  bottom: 16px;
+  left: 24%;
+  width: auto;
+  height: auto;
+  border-right: 2px solid rgba(51, 78, 172, .22);
+  border-left: 2px solid rgba(51, 78, 172, .22);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.mini-court .court-service-box::after {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 2px;
+  content: "";
+  background: rgba(51, 78, 172, .22);
+  transform: translateY(-1px);
+}
+.mini-court .court-net {
+  position: absolute;
+  z-index: 2;
+  top: -7px;
+  bottom: -7px;
+  left: 50%;
+  width: 3px;
+  height: auto;
+  border: 0;
+  border-radius: 2px;
+  background: #7c8dab;
+  box-shadow: 4px 0 8px rgba(31, 41, 55, .1);
+  transform: translateX(-1px);
+}
+.mini-court .court-ball {
+  position: absolute;
+  z-index: 3;
+  top: 24px;
+  right: 20%;
+  display: block;
+  width: 20px;
+  height: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(20, 107, 91, .16);
+  border-radius: 50%;
+  background: #58cdbd;
+  box-shadow: 0 7px 12px rgba(31, 41, 55, .15);
+}
+.mini-court .court-ball::before,
+.mini-court .court-ball::after {
+  position: absolute;
+  top: 1px;
+  width: 10px;
+  height: 16px;
+  content: "";
+  border: 1.5px solid rgba(255, 255, 255, .8);
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+}
+.mini-court .court-ball::before { left: -5px; }
+.mini-court .court-ball::after { right: -5px; }

@@ -1,0 +1,98 @@
+/* Admin tables, role management, and member operations. */
+.applications-table { overflow-x: hidden; }
+.applications-table table { table-layout: fixed; white-space: normal; }
+.applications-table th:nth-child(1) { width: 24%; }
+.applications-table th:nth-child(2) { width: 30%; }
+.applications-table th:nth-child(3) { width: 16%; }
+.applications-table th:nth-child(4) { width: 30%; }
+.applications-table td { overflow-wrap: anywhere; }
+.applications-table td form { display: flex; align-items: center; gap: 7px; }
+.applications-table td select { min-width: 0; padding: 9px; }
+.applications-table .table-action { flex: 0 0 auto; margin-left: 0; }
+.role-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 14px;
+  align-items: end;
+  margin-top: 18px;
+}
+.role-form .primary { width: auto; }
+.direct-membership-form { display: grid; gap: 16px; margin-top: 18px; }
+.direct-membership-form > .primary { width: fit-content; }
+.panel-description { margin: 12px 0 0; color: var(--muted); font-size: 13px; }
+.membership-candidate-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--line); }
+.membership-candidate-summary > div { display: grid; align-content: start; gap: 5px; min-width: 0; padding: 13px; background: #fafbf9; }
+.membership-candidate-summary small { color: var(--muted); font-size: 10px; font-weight: 700; }
+.membership-candidate-summary strong { overflow-wrap: anywhere; font-size: 12px; line-height: 1.55; }
+.restore-account-form { display: flex; gap: 6px; margin-top: 8px; }
+.restore-account-form input { min-width: 120px; padding: 8px; }
+.inline-role-form { display: flex; align-items: center; gap: 7px; }
+.inline-role-form select { min-width: 140px; padding: 8px; }
+.inline-role-form .table-action { flex: 0 0 auto; margin-left: 0; }
+.user-search { position: relative; }
+.user-search-results {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 14px 35px #17251f24;
+}
+.user-search-results button {
+  display: grid;
+  width: 100%;
+  gap: 3px;
+  padding: 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+.user-search-results button:hover { background: var(--cream); }
+.user-search-results small { color: var(--muted); font-weight: 400; }
+.selected-users { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.selected-users button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #e4ece7;
+  color: var(--green);
+  font-size: 12px;
+}
+.bulk-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: white;
+  color: var(--muted);
+  font-size: 13px;
+}
+.check-column { width: 44px; text-align: center; }
+.check-column input { width: 17px; height: 17px; }
+.admin-nav nav { margin-top: 32px; gap: 3px; }
+.admin-nav nav a { padding: 10px 12px; }
+
+@media (max-width: 800px) {
+  .membership-candidate-summary { grid-template-columns: 1fr; }
+  .direct-membership-form > .primary { width: 100%; }
+  .role-form { grid-template-columns: 1fr; }
+  .role-form .primary { width: 100%; }
+  .bulk-toolbar { align-items: stretch; flex-direction: column; }
+  .bulk-toolbar .danger { width: 100%; }
+  .admin-main { padding-bottom: 104px; }
+}

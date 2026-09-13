@@ -1,0 +1,25 @@
+:root {
+  --ink: #1f2937;
+  --green: #334eac;
+  --lime: #00c2a8;
+  --cream: #f7f8fc;
+  --line: #e5e7eb;
+  --muted: #4b5563;
+  --white: #fff;
+  --danger: #b94747;
+  --surface-shadow: 0 18px 45px rgba(51, 78, 172, 0.08);
+  --strong-shadow: 0 24px 70px rgba(31, 41, 55, 0.18);
+}
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline-color: var(--lime);
+}
+
+.green { color: var(--green); }
+.brand { color: var(--green); letter-spacing: -.025em; }
+.admin-nav .brand { color: white; }
