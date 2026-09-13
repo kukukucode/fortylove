@@ -9,7 +9,6 @@ export const booleanFormValueSchema = z.enum(["true", "false"]).transform((value
 export const audienceSchema = z.enum(["admin", "member"]);
 export const userRoleSchema = z.enum(["member", "admin", "super_admin"]);
 export const assignableAdminRoleSchema = z.enum(["admin", "super_admin"]);
-export const reservationStatusSchema = z.enum(["reserved", "cancelled", "attended"]);
 export const positiveIntegerIdSchema = z.coerce.number().int().positive();
 export const temporaryPasswordSchema = z.string().max(256).refine(isValidNewPassword);
 
@@ -30,10 +29,6 @@ export const updateEventInputSchema = z.object({
   remove_document: booleanFormValueSchema.default("false"),
 });
 export const eventIdInputSchema = z.object({ event_id: uuidSchema });
-export const attendanceInputSchema = z.object({
-  id: uuidSchema,
-  status: reservationStatusSchema,
-});
 
 const faqFields = {
   question: trimmedText(1, 500),

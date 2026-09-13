@@ -1,0 +1,24 @@
+/* Shared event list content. */
+.event-date strong { white-space: nowrap; }
+.event-date strong > span { display: inline; }
+.event-date.date-range { display: grid; justify-items: center; gap: 3px; }
+.event-date.date-range strong { font-size: 16px; }
+.event-date.date-range b { color: var(--muted); font-size: 13px; font-weight: 500; line-height: 1; }
+.event-main { min-width: 0; }
+.event-main h3,
+.event-main p,
+.event-meta span {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 800px) {
+  .event-card { grid-template-columns: 78px minmax(0, 1fr); gap: 10px; }
+  .event-date { padding-right: 8px; }
+  .event-date strong { font-size: 14px; white-space: nowrap; line-height: 1.05; }
+  .event-date strong > span { display: inline; }
+  .event-date.date-range { gap: 2px; }
+  .event-date.date-range strong { font-size: 12px; }
+  .event-date.date-range b { font-size: 10px; }
+  .event-chip { display: inline-block; max-width: 100%; overflow-wrap: anywhere; }
+}

@@ -1,0 +1,48 @@
+.home-content { width: min(960px, calc(100% - 48px)); }
+.home-content .participation-calendar {
+  width: min(720px, 100%);
+  margin: 0 auto 52px;
+  padding: 18px;
+}
+.home-content .calendar-day { min-height: 72px; padding: 5px; }
+.home-content .calendar-heading { margin-bottom: 16px; }
+.home-content .calendar-heading h2 { font-size: 23px; }
+.calendar-events a.general-event { color: #7b4d13; background: #fff4da; }
+
+.home-next-event { width: min(720px, 100%); margin: 0 auto; }
+.home-next-event .section-head > a {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 700;
+}
+.home-next-event .section-head > a svg { width: 17px; transition: transform .2s ease; }
+.home-next-event .section-head > a:hover svg { transform: translateX(3px); }
+.next-event-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 22px;
+  align-items: center;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: white;
+  box-shadow: var(--surface-shadow);
+}
+.next-event-card:hover { border-color: #bfc9e9; transform: translateY(-2px); box-shadow: 0 18px 46px rgba(51, 78, 172, .12); }
+.next-event-card > svg { width: 22px; color: var(--green); }
+.next-event-date { display: grid; width: 82px; height: 82px; place-items: center; align-content: center; border-radius: 18px; color: #29499f; background: linear-gradient(145deg, #edf1fb, #dce6f8); }
+.next-event-date strong { font-size: 30px; line-height: 1; }
+.next-event-date small { margin-top: 5px; color: #526b9e; }
+.next-event-main { display: grid; min-width: 0; gap: 7px; }
+.next-event-main > small { width: fit-content; padding: 4px 8px; border-radius: 999px; color: #087968; background: #e9fbf7; font-weight: 700; }
+.next-event-main > strong { overflow-wrap: anywhere; font-size: 20px; }
+.next-event-main > span { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+.next-event-main svg { width: 15px; }
+.next-event-empty { display: grid; grid-template-columns: auto 1fr auto; gap: 18px; align-items: center; padding: 26px; border: 1px dashed #c7cfe7; border-radius: 18px; background: rgba(255, 255, 255, .72); }
+.next-event-empty > svg { width: 34px; color: var(--green); }
+.next-event-empty strong { font-size: 16px; }
+.next-event-empty p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+.next-event-empty .primary { width: auto; }

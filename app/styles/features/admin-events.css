@@ -1,0 +1,57 @@
+/* Admin event management and attendance display. */
+.admin-event-stats { display: flex; gap: 22px; }
+.admin-event-stats > span { display: grid; text-align: center; }
+.admin-event-stats strong { font-size: 24px; }
+.admin-event-stats small { color: var(--muted); }
+.admin-event-actions { display: flex; align-items: center; gap: 8px; }
+.admin-event-actions > form { margin: 0; }
+.admin-event-actions .event-delete,
+.admin-event-actions .event-edit-trigger { width: 78px; min-height: 38px; margin: 4px 0 0; padding: 8px 14px; }
+.event-status-tabs { display: flex; gap: 8px; margin: 0 0 16px; padding: 5px; border: 1px solid var(--line); border-radius: 11px; background: white; }
+.event-status-tabs a { flex: 1; padding: 10px 14px; border-radius: 7px; color: var(--muted); font-size: 12px; font-weight: 700; text-align: center; }
+.event-status-tabs a.active { background: var(--ink); color: white; }
+.event-status-empty { margin: 0; padding: 48px 20px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); text-align: center; }
+.event-edit-dialog { width: min(760px, calc(100% - 28px)); max-height: calc(100vh - 32px); padding: 0; border: 0; border-radius: 16px; background: transparent; }
+.event-edit-dialog::backdrop { background: rgba(7, 29, 22, .58); backdrop-filter: blur(3px); }
+.event-edit-modal { max-height: calc(100vh - 32px); overflow-y: auto; padding: 28px; border-radius: 16px; background: white; box-shadow: 0 24px 70px rgba(7, 29, 22, .28); }
+.event-edit-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.event-edit-heading h2 { margin: 6px 0 0; font-size: 26px; }
+.event-edit-heading > button { display: grid; width: 38px; height: 38px; flex: 0 0 auto; place-items: center; border: 1px solid var(--line); border-radius: 9px; background: white; color: var(--muted); }
+.event-edit-heading svg { width: 18px; }
+.event-edit-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.attendance-list { display: grid; gap: 10px; padding: 0; list-style: none; }
+.attendance-list li { display: grid; gap: 12px; padding: 15px; border: 1px solid #e7ebe8; border-radius: 10px; background: #fafbf9; }
+.attendance-person { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.attendance-person > span { padding: 4px 8px; border-radius: 999px; background: #e4ece7; color: var(--green); font-size: 10px; font-weight: 700; }
+.attendance-attributes { display: grid; grid-template-columns: 1.8fr .6fr 1.3fr 1fr; gap: 12px; }
+.attendance-attributes > div { display: grid; align-content: start; gap: 4px; min-width: 0; }
+.attendance-attributes small { color: var(--muted); font-size: 9px; font-weight: 700; }
+.attendance-attributes span { overflow-wrap: anywhere; font-size: 11px; line-height: 1.5; }
+.attendance-attributes .status-owned, .attendance-attributes .status-needed { width: fit-content; }
+.attendance-empty { padding: 16px 0 2px; color: var(--muted); }
+.admin-event { min-width: 0; }
+.grid-form > label,
+.event-edit-modal .grid-form > label { min-width: 0; }
+input[type="datetime-local"] { min-width: 0; max-width: 100%; }
+.admin-participation-page { max-width: 1200px; }
+.admin-event > div,
+.admin-event details,
+.admin-event h3,
+.admin-event p { min-width: 0; max-width: 100%; }
+.admin-event h3,
+.admin-event p,
+.attendance-list li > span { overflow-wrap: anywhere; word-break: break-word; }
+
+@media (max-width: 800px) {
+  .event-edit-modal { padding: 22px 16px; }
+  .event-edit-actions { grid-template-columns: 1fr; }
+  input[type="datetime-local"] { display: block; width: 100%; min-inline-size: 0; max-inline-size: 100%; padding-right: 10px; padding-left: 10px; }
+  .admin-event { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+  .admin-event-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 8px; align-items: end; }
+  .admin-event-actions { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; padding-top: 4px; border-top: 1px solid var(--line); }
+  .admin-event-actions > form { width: 100%; }
+  .admin-event-actions .event-delete,
+  .admin-event-actions .event-edit-trigger { width: 100%; min-height: 44px; margin: 0; }
+  .admin-event details { grid-column: 1; }
+  .attendance-attributes { grid-template-columns: 1fr 1fr; }
+}

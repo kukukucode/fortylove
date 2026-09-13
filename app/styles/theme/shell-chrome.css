@@ -1,0 +1,6 @@
+.member-header,
+.admin-top {
+  border-color: rgba(229, 231, 235, .82);
+  background: rgba(255, 255, 255, .88);
+  backdrop-filter: blur(18px);
+}

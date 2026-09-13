@@ -62,8 +62,6 @@ jobs:
       - if: steps.changes.outputs.database == 'true'
         run: psql -v ON_ERROR_STOP=1 -f supabase/manual/production_upgrade_20260905.sql
       - if: steps.changes.outputs.database == 'true'
-        run: psql -v ON_ERROR_STOP=1 -f supabase/verify_production.sql
-      - if: steps.changes.outputs.database == 'true'
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260906_chatbot_experience.sql
       - if: steps.changes.outputs.database == 'true'
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/chatbot_experience.sql
@@ -71,6 +69,10 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260906_operations_quality.sql
       - if: steps.changes.outputs.database == 'true'
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/operations_quality.sql
+      - if: steps.changes.outputs.database == 'true'
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913_fix_p0_invariants.sql
+      - if: steps.changes.outputs.database == 'true'
+        run: psql -v ON_ERROR_STOP=1 -f supabase/verify_production.sql
       - if: steps.changes.outputs.database == 'true'
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/p0_quality.sql
       - name: Prepare reservation concurrency test
@@ -84,6 +86,31 @@ jobs:
       - name: Verify reservation capacity after concurrency
         if: steps.changes.outputs.database == 'true'
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/reservation_concurrency_assert.sql
+      - name: Prepare event update concurrency test
+        if: steps.changes.outputs.database == 'true'
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/event_update_concurrency_setup.sql
+      - name: Race capacity reduction against a reservation
+        if: steps.changes.outputs.database == 'true'
+        run: |
+          psql -v ON_ERROR_STOP=1 -Atc "select public.update_event_metadata(
+            '30000000-0000-0000-0000-000000000001'::uuid,
+            '11000000-0000-0000-0000-000000000001'::uuid,
+            'capacity update won',
+            now() + interval '7 days',
+            now() + interval '7 days 2 hours',
+            'CI', 1, '', 'tennis'
+          )" &
+          update_pid=$!
+          psql -v ON_ERROR_STOP=1 -Atc "select public.reserve_event(
+            '32000000-0000-0000-0000-000000000001'::uuid,
+            '11000000-0000-0000-0000-000000000001'::uuid
+          )" &
+          reserve_pid=$!
+          wait "$update_pid"
+          wait "$reserve_pid"
+      - name: Verify capacity after event update concurrency
+        if: steps.changes.outputs.database == 'true'
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/event_update_concurrency_assert.sql
 
   verify:
     runs-on: ubuntu-latest

@@ -1,0 +1,36 @@
+.event-card,
+.admin-event,
+.table-wrap,
+.settings-card,
+.create-panel,
+.faq-item,
+.faq-inbox,
+.faq-admin-card,
+.profile-card,
+.participation-calendar {
+  border-color: var(--line);
+  box-shadow: var(--surface-shadow);
+}
+
+.admin-nav { background: #202b43; }
+.site-footer {
+  color: var(--ink);
+  border-top: 1px solid #dfe4ec;
+  background: #eef2f7;
+}
+.footer-brand > strong,
+.footer-nav strong,
+.footer-social > strong { color: var(--green); }
+.footer-brand p,
+.footer-social > small,
+.social-links small,
+.footer-bottom { color: var(--muted); }
+.site-footer .social-link-disabled small { color: var(--muted); }
+.footer-nav a { color: var(--ink); }
+.footer-nav a:hover { color: var(--green); }
+.social-links > a,
+.social-link-disabled { border-color: #d7dde7; background: rgba(255, 255, 255, .72); }
+.social-links > a:hover { border-color: #aebada; }
+.footer-bottom { border-top-color: #d7dde7; }
+.social-mark { background: #50c8b7; }
+.social-x { color: white; background: #52617a; }
