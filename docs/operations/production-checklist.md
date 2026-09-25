@@ -35,12 +35,13 @@
 - [ ] `/api/cron/promote-grades`を認証付きで試験し、同一年の再実行で二重更新されないことを確認する
 - [ ] `/api/cron/cleanup-event-uploads`を認証付きで試験し、確定済みPDFを削除しないことを確認する
 - [ ] Vercel Logsと`audit_logs`で実行結果を確認する
+- [ ] Supabase Free向けのDB疎通Cron（`early`・`midday`・`late`）がProductionに登録され、Vercel Logsで1日3回の成功を確認する
 
-完了条件: 2つのCronが認証付きで成功し、未認証アクセスを拒否し、再実行安全性と監査記録を確認できる。
+完了条件: 学年更新・アップロード清掃のCronが認証付きで成功し、未認証アクセスを拒否し、再実行安全性と監査記録を確認できる。DB疎通Cronは既存の`CRON_SECRET`で認証し、読み取りだけを実行する。Supabase Freeの自動停止を必ず防げる保証はないため、停止予告メールも確認する。外部ヘルス監視の5分間隔チェックや通知は再開しない。
 
 ## 共通の完了作業
 
 - [x] 環境変数追加後にProductionを再デプロイする
-- [ ] `GET /api/health`がHTTP 200、`status: ok`、`database: ok`を返すことを確認する
+- [ ] `GET /api/health`の公開livenessがHTTP 200を返し、認証付きreadinessでDB状態を確認する
 - [ ] APIキーやSecretがGit履歴、アプリ画面、ログへ出力されていないことを確認する
 - [ ] 完了した項目へ日付と確認者を追記する
