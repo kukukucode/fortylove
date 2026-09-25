@@ -7,6 +7,18 @@
     {
       "path": "/api/cron/cleanup-event-uploads",
       "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/cron/supabase-activity/early",
+      "schedule": "17 1 * * *"
+    },
+    {
+      "path": "/api/cron/supabase-activity/midday",
+      "schedule": "17 9 * * *"
+    },
+    {
+      "path": "/api/cron/supabase-activity/late",
+      "schedule": "17 17 * * *"
     }
   ]
 }
