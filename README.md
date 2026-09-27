@@ -69,3 +69,7 @@ Pull RequestではLint・型検査・単体テストを常に実行し、変更�
 ## セキュリティ
 
 詳細は[セキュリティポリシー](SECURITY.md)を確認してください。
+
+## ライセンス
+
+[MIT License](LICENSE)で公開しています。
