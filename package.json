@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@sentry/nextjs": "^10.73.0",
-    "@supabase/supabase-js": "^2.117.1",
+    "@supabase/supabase-js": "^2.117.2",
     "bcryptjs": "^3.0.2",
     "lucide-react": "^0.468.0",
     "next": "15.5.24",
