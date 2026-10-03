@@ -23,7 +23,7 @@
     "@sentry/nextjs": "^10.73.0",
     "@supabase/supabase-js": "^2.117.1",
     "bcryptjs": "^3.0.2",
-    "lucide-react": "^0.468.0",
+    "lucide-react": "^1.49.0",
     "next": "15.5.24",
     "pdfjs-dist": "5.4.296",
     "react": "^19.3.0",
