@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-export function parseActionInput<Schema extends z.ZodTypeAny>(
+export function parseActionInput<Schema extends z.ZodType>(
   schema: Schema,
   input: unknown,
   errorPath: string,

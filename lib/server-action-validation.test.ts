@@ -4,6 +4,7 @@ import {
   createEventInputSchema,
   createFaqInputSchema,
   resetPasswordInputSchema,
+  updateEventInputSchema,
   updateRoleInputSchema,
   withdrawalIdsInputSchema,
 } from "./server-action-validation";
@@ -28,6 +29,29 @@ describe("Server Action input validation", () => {
 
   it("rejects unsupported role values", () => {
     expect(updateRoleInputSchema.safeParse({ user_id: userId, role: "owner" }).success).toBe(false);
+  });
+
+  it("keeps document removal opt-in when updating an event", () => {
+    const event = {
+      event_id: userId,
+      title: "練習会",
+      starts_at: "2026-09-10T10:00",
+      ends_at: "2026-09-10T12:00",
+      location: "早稲田大学",
+      capacity: "20",
+      description: "初心者歓迎",
+    };
+
+    expect(updateEventInputSchema.parse(event)).toMatchObject({
+      capacity: 20,
+      event_type: "tennis",
+      remove_document: false,
+    });
+    expect(updateEventInputSchema.parse({ ...event, remove_document: "false" }).remove_document).toBe(false);
+    expect(updateEventInputSchema.parse({ ...event, remove_document: "true" }).remove_document).toBe(true);
+    for (const removeDocument of [true, false, null, "", "on", "invalid"]) {
+      expect(updateEventInputSchema.safeParse({ ...event, remove_document: removeDocument }).success).toBe(false);
+    }
   });
 
   it("validates FAQ bounds and chatbot source limits", () => {

@@ -26,7 +26,7 @@ export const createEventInputSchema = z.object(eventFields);
 export const updateEventInputSchema = z.object({
   event_id: uuidSchema,
   ...eventFields,
-  remove_document: booleanFormValueSchema.default("false"),
+  remove_document: booleanFormValueSchema.default(false),
 });
 export const eventIdInputSchema = z.object({ event_id: uuidSchema });
 
