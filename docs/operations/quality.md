@@ -84,6 +84,8 @@ GitHub artifactは `.ops-reports/*.json` の数値のみ。DBダンプ・Storage
 
 `pnpm audit`（開発用を含む全依存）と `pnpm audit --prod` を分けて確認する。
 検出0件はその時点の既知アドバイザリに対する結果であり、未知の問題がない保証ではない。
+`packageManager` とVercelのinstall commandはCIと同じpnpm 11.19.0に固定する。
+pnpm 10では今回のパッチ情報を含むロックファイルのfrozen installが失敗するため、自動判定へ任せない。
 
 `braces` の [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) は修正版未公開のため、
 Next.jsのLintプラグイン15.5.28に限って `fast-glob` を `tinyglobby` 0.2.17へ置換して依存を除去している。
