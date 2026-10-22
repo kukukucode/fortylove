@@ -80,6 +80,24 @@ pnpm test:restore
 GitHub artifactは `.ops-reports/*.json` の数値のみ。DBダンプ・Storage・メールアドレス・ブラウザtraceはアップロードしない。
 文字コントラストを含むaxe検査を無効化して通すことはしない。外部Google Fonts取得だけはCIで止め、フォールバックフォントを使用する。
 
+## 依存関係の監査とLint互換パッチ
+
+`pnpm audit`（開発用を含む全依存）と `pnpm audit --prod` を分けて確認する。
+検出0件はその時点の既知アドバイザリに対する結果であり、未知の問題がない保証ではない。
+`packageManager` とVercelのinstall commandはCIと同じpnpm 11.19.0に固定する。
+pnpm 10では今回のパッチ情報を含むロックファイルのfrozen installが失敗するため、自動判定へ任せない。
+
+`braces` の [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) は修正版未公開のため、
+Next.jsのLintプラグイン15.5.28に限って `fast-glob` を `tinyglobby` 0.2.17へ置換して依存を除去している。
+実際の呼び出しは `globSync(pattern, { onlyDirectories: true })` のみ。
+`patches/@next__eslint-plugin-next@15.5.28.patch` で `expandDirectories: false` を指定し、
+完全一致のディレクトリ指定で子孫ディレクトリまで返す動作を抑えて元の検索範囲を維持する。
+アプリ本体・Next.jsランタイムの検索処理やLintルールは変更しない。
+
+プラグイン更新時にはoverrideとパッチをセットで再評価し、上流で脆弱な依存が不要になったら両方を削除する。
+`lib/eslint-dependency-compatibility.test.ts` は実プラグインを通して、完全一致・glob・配列・brace・Windowsパスと
+内部HTMLリンクの検出を確認する。パッチ適用を無効化したりアラートを除外して監査を通さない。
+
 ## 復元と性能の評価範囲
 
 ローカル復元は新しい `fortylove_quality_restore_*` DBを作り、既存DBを上書きしない。成果物とDBは確認後に担当者が破棄する。
