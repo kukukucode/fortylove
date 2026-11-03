@@ -10,7 +10,11 @@ export function SiteFooter() {
       <div className="footer-main">
         <div className="footer-brand">
           <strong>Fortylove</strong>
-          <p>早稲田大学のテニスサークル<br />新歓・練習管理サイト</p>
+          <p>
+            早稲田大学のテニスサークル
+            <br />
+            新歓・練習管理サイト
+          </p>
         </div>
         <nav className="footer-nav" aria-label="フッターナビゲーション">
           <strong>MENU</strong>
@@ -22,19 +26,30 @@ export function SiteFooter() {
           <strong>OFFICIAL SNS</strong>
           <small>新歓情報や活動の様子を発信しています</small>
           <div className="social-links">
-            <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" aria-label="Instagramを見る">
-              <span className="social-mark"><Instagram /></span>
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagramを見る"
+            >
+              <span className="social-mark">
+                <Instagram />
+              </span>
               <span>Instagram</span>
             </a>
             {X_URL ? (
               <a href={X_URL} target="_blank" rel="noopener noreferrer">
                 <span className="social-mark social-x">X</span>
-                <span>X<small>公式アカウント</small></span>
+                <span>
+                  X<small>公式アカウント</small>
+                </span>
               </a>
             ) : (
               <span className="social-link-disabled">
                 <span className="social-mark social-x">X</span>
-                <span>X<small>COMING SOON</small></span>
+                <span>
+                  X<small>COMING SOON</small>
+                </span>
               </span>
             )}
           </div>

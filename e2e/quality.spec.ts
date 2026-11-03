@@ -79,17 +79,24 @@ test("実DB: memberの管理画面アクセスと古いセッションを拒否�
 });
 
 test("実DB: super_adminの通知先設定は保存・監査される", async ({ page }) => {
+  await assertDb(qualityDb.from("ops_notification_settings").update({ health_enabled: false }).eq("id", 1));
   await loginAs(page, "Owner"); await page.goto("/admin/settings");
   await page.getByLabel("通知先メールアドレス").fill("quality-ops@example.com");
   await page.getByLabel("障害・復旧を通知する").check();
   await page.getByRole("button", { name: "通知設定を保存" }).click();
   await expect(page.getByRole("status")).toContainText("監視通知の設定を保存しました");
+  await expect(page.getByLabel("障害・復旧を通知する")).toBeChecked();
   const { data } = await assertDb(qualityDb.from("ops_notification_settings").select("email,health_enabled").eq("id", 1).single());
   expect(data).toMatchObject({ email: "quality-ops@example.com", health_enabled: true });
   const audit = await assertDb(qualityDb.from("audit_logs").select("action").eq("action", "ops.notification.settings.update"));
   expect(audit.data!.length).toBeGreaterThan(0);
-  await page.getByLabel("障害・復旧を通知する").uncheck(); await page.getByRole("button", { name: "通知設定を保存" }).click();
+  await page.getByLabel("障害・復旧を通知する").uncheck();
+  await page.getByRole("button", { name: "通知設定を保存" }).click();
+  await expect(page.getByRole("button", { name: "通知設定を保存" })).toBeEnabled();
+  await expect(page.getByLabel("障害・復旧を通知する")).not.toBeChecked();
   await expect.poll(async () => (await assertDb(qualityDb.from("ops_notification_settings").select("health_enabled").eq("id", 1).single())).data?.health_enabled).toBe(false);
+  await page.reload();
+  await expect(page.getByLabel("障害・復旧を通知する")).not.toBeChecked();
 });
 
 test("主要レスポンスに安全ヘッダー、HealthはDB実測・認証必須設定は非公開", async ({ request }) => {
