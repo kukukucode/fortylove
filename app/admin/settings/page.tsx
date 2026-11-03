@@ -1,7 +1,7 @@
 import { FormFeedback } from "@/components/form-feedback";
+import { NotificationSettingsForm } from "@/components/notification-settings-form";
 import {
   testNotificationDelivery,
-  updateNotificationSettings,
   updateRecruitingStatus,
 } from "@/app/server-actions/settings-actions";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
@@ -72,35 +72,11 @@ export default async function Settings({
           </p>
         ) : (
           <>
-            <form action={updateNotificationSettings}>
-              <FormFeedback successMessage="監視通知の設定を保存しました。" />
-              <label htmlFor="ops-email">通知先メールアドレス</label>
-              <input
-                id="ops-email"
-                name="email"
-                type="email"
-                maxLength={254}
-                defaultValue={notifications?.email ?? ""}
-                autoComplete="email"
-              />
-              <label>
-                <input
-                  type="checkbox"
-                  name="health_enabled"
-                  defaultChecked={notifications?.health_enabled}
-                />
-                障害・復旧を通知する
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  name="errors_enabled"
-                  defaultChecked={notifications?.errors_enabled}
-                />
-                アプリケーションエラーを通知する
-              </label>
-              <button className="primary">通知設定を保存</button>
-            </form>
+            <NotificationSettingsForm
+              initialEmail={notifications?.email ?? ""}
+              initialHealthEnabled={notifications?.health_enabled ?? false}
+              initialErrorsEnabled={notifications?.errors_enabled ?? false}
+            />
             <form action={testNotificationDelivery}>
               <FormFeedback />
               <button type="submit">保存済みの通知先にテスト送信</button>
