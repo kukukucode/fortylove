@@ -1,3 +1,4 @@
+import { sentryDataCollection } from "./sentry-data-collection";
 import * as Sentry from "@sentry/nextjs";
 import { expect, it } from "vitest";
 import { scrubErrorEvent } from "./sentry-privacy";
@@ -6,7 +7,7 @@ it("the real SDK transport receives only the scrubbed event, without network acc
   const envelopes: unknown[] = [];
   Sentry.init({
     dsn: "https://public@example.invalid/1", defaultIntegrations: false,
-    sendDefaultPii: false, tracesSampleRate: 0, beforeSend: scrubErrorEvent,
+    dataCollection: sentryDataCollection, tracesSampleRate: 0, beforeSend: scrubErrorEvent,
     transport: () => ({ send: async (envelope: unknown) => { envelopes.push(envelope); return { statusCode: 200 }; }, flush: async () => true }),
   });
   try {
