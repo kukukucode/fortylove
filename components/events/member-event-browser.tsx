@@ -12,7 +12,7 @@ export function MemberEventBrowser({ events }: { events: MemberEventItem[] }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const selected = events.find((event) => event.id === selectedId);
   const visibleEvents = useMemo(
-    () => filter === "all" ? events : events.filter((event) => event.eventType === filter),
+    () => (filter === "all" ? events : events.filter((event) => event.eventType === filter)),
     [events, filter],
   );
 
@@ -43,27 +43,43 @@ export function MemberEventBrowser({ events }: { events: MemberEventItem[] }) {
     window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
   }
 
-  return <>
-    <div className="event-filter" role="group" aria-label="イベントを絞り込む">
-      {([
-        ["all", "すべて"],
-        ["tennis", "テニス"],
-        ["event", "イベント"],
-      ] as const).map(([value, label]) => <button
-        type="button"
-        className={filter === value ? "active" : ""}
-        aria-pressed={filter === value}
-        onClick={() => setFilter(value)}
-        key={value}
-      >{label}</button>)}
-    </div>
-
-    {visibleEvents.length
-      ? <div className="event-gallery">
-        {visibleEvents.map((event) => <MemberEventCard key={event.id} event={event} onOpen={openEvent} />)}
+  return (
+    <>
+      <div className="event-filter" role="group" aria-label="イベントを絞り込む">
+        {(
+          [
+            ["all", "すべて"],
+            ["tennis", "テニス"],
+            ["event", "イベント"],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            type="button"
+            className={filter === value ? "active" : ""}
+            aria-pressed={filter === value}
+            onClick={() => setFilter(value)}
+            key={value}
+          >
+            {label}
+          </button>
+        ))}
       </div>
-      : <div className="event-gallery-empty"><CalendarDays /><h2>該当するイベントはありません</h2><p>別の種別を選ぶか、新しい予定の公開をお待ちください。</p></div>}
 
-    <MemberEventDialog dialogRef={dialogRef} event={selected} onClose={closeEvent} />
-  </>;
+      {visibleEvents.length ? (
+        <div className="event-gallery">
+          {visibleEvents.map((event) => (
+            <MemberEventCard key={event.id} event={event} onOpen={openEvent} />
+          ))}
+        </div>
+      ) : (
+        <div className="event-gallery-empty">
+          <CalendarDays />
+          <h2>該当するイベントはありません</h2>
+          <p>別の種別を選ぶか、新しい予定の公開をお待ちください。</p>
+        </div>
+      )}
+
+      <MemberEventDialog dialogRef={dialogRef} event={selected} onClose={closeEvent} />
+    </>
+  );
 }
