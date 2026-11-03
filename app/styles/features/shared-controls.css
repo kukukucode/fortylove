@@ -13,7 +13,9 @@ select {
   line-height: 1.35;
   cursor: pointer;
 }
-select:hover { border-color: #aebdb5; }
+select:hover {
+  border-color: #aebdb5;
+}
 select:disabled {
   cursor: not-allowed;
   background-color: #f0f2ef;
@@ -28,4 +30,14 @@ select:disabled {
   border-radius: 8px;
   font-size: 13px;
 }
-.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
