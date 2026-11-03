@@ -42,7 +42,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ja">
-      <body><NavigationFeedback />{children}<ScrollToTop /></body>
+      <body>
+        <NavigationFeedback />
+        {children}
+        <ScrollToTop />
+      </body>
     </html>
   );
 }
