@@ -5,7 +5,9 @@
   user-select: none;
   overflow: hidden;
 }
-.avatar::-webkit-details-marker { display: none; }
+.avatar::-webkit-details-marker {
+  display: none;
+}
 .avatar img,
 .profile-avatar img {
   display: block;
@@ -15,11 +17,24 @@
   object-fit: cover;
   transform: scale(1.03);
 }
-.profile-avatar { overflow: hidden; }
+.profile-avatar {
+  overflow: hidden;
+}
 .avatar.has-image,
-.profile-avatar.has-image { background: transparent; }
-.avatar-content { display: grid; width: 100%; height: 100%; place-items: center; border-radius: inherit; overflow: hidden; }
-.user-menu { position: relative; }
+.profile-avatar.has-image {
+  background: transparent;
+}
+.avatar-content {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  border-radius: inherit;
+  overflow: hidden;
+}
+.user-menu {
+  position: relative;
+}
 .user-menu-panel {
   position: absolute;
   z-index: 70;
@@ -56,11 +71,25 @@
   text-decoration: none;
 }
 .user-menu-panel a:hover,
-.user-menu-panel button:hover { background: var(--cream); }
-.user-menu-panel svg { width: 17px; height: 17px; }
-.user-menu-panel form { margin: 0; }
-.mobile-logout-form { display: block !important; }
-.mobile-logout-form button { display: flex !important; width: 100%; align-items: center; gap: 10px; }
+.user-menu-panel button:hover {
+  background: var(--cream);
+}
+.user-menu-panel svg {
+  width: 17px;
+  height: 17px;
+}
+.user-menu-panel form {
+  margin: 0;
+}
+.mobile-logout-form {
+  display: block !important;
+}
+.mobile-logout-form button {
+  display: flex !important;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+}
 .member-tabs {
   position: sticky;
   z-index: 9;
@@ -73,13 +102,36 @@
   background: #fffffff2;
   backdrop-filter: blur(10px);
 }
-.member-tabs a { display: flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 9px; color: var(--muted); font-size: 13px; font-weight: 700; }
+.member-tabs a {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border-radius: 9px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
 .member-tabs a:hover,
-.member-tabs a.active { color: var(--green); background: #eaf1ec; }
-.member-tabs svg { width: 17px; height: 17px; }
-.admin-nav-desktop { min-height: 100%; display: flex; flex-direction: column; }
-.admin-nav-desktop > form { margin-top: auto; }
-.admin-mobile-menu { display: none; }
+.member-tabs a.active {
+  color: var(--green);
+  background: #eaf1ec;
+}
+.member-tabs svg {
+  width: 17px;
+  height: 17px;
+}
+.admin-nav-desktop {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.admin-nav-desktop > form {
+  margin-top: auto;
+}
+.admin-mobile-menu {
+  display: none;
+}
 .scroll-to-top {
   position: fixed;
   z-index: 40;
@@ -98,27 +150,97 @@
   opacity: 0;
   pointer-events: none;
   transform: translateY(10px);
-  transition: opacity .2s ease, transform .2s ease, background .2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    background 0.2s ease;
   backdrop-filter: blur(8px);
 }
-.scroll-to-top.visible { opacity: .82; pointer-events: auto; transform: translateY(0); }
-.scroll-to-top:hover { opacity: 1; background: var(--green); }
-.scroll-to-top svg { width: 20px; height: 20px; }
+.scroll-to-top.visible {
+  opacity: 0.82;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+.scroll-to-top:hover {
+  opacity: 1;
+  background: var(--green);
+}
+.scroll-to-top svg {
+  width: 20px;
+  height: 20px;
+}
 
 @media (max-width: 800px) {
-  .user-menu .avatar { width: 38px; height: 38px; padding: 0; border-radius: 50%; background: var(--ink); }
-  .user-menu-panel { width: min(260px, calc(100vw - 32px)); }
-  .member-header .mobile-logout-form button { color: var(--ink); font-size: 14px; font-weight: 700; opacity: 1; }
-  .admin-nav-desktop { display: none; }
-  .admin-mobile-menu { display: block; }
-  .admin-mobile-menu > summary { display: flex; align-items: center; justify-content: space-between; cursor: pointer; list-style: none; }
-  .admin-mobile-menu > summary::-webkit-details-marker { display: none; }
-  .admin-mobile-menu > summary > span { display: flex; align-items: center; gap: 7px; padding: 9px 11px; border: 1px solid #ffffff28; border-radius: 8px; font-size: 12px; }
-  .admin-mobile-menu > summary svg { width: 18px; height: 18px; }
-  .admin-mobile-menu nav { display: grid; overflow: visible; margin-top: 15px; }
-  .admin-mobile-menu .mobile-logout-form { display: block !important; margin-top: 8px; padding-top: 8px; border-top: 1px solid #ffffff1f; }
-  .admin-mobile-menu .mobile-logout-form button { color: white; background: #ffffff0c; }
-  .scroll-to-top { right: 16px; bottom: 88px; width: 42px; height: 42px; }
-  .member-tabs { display: none; }
-  .bottom-nav { grid-template-columns: repeat(4, 1fr); }
+  .user-menu .avatar {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--ink);
+  }
+  .user-menu-panel {
+    width: min(260px, calc(100vw - 32px));
+  }
+  .member-header .mobile-logout-form button {
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 700;
+    opacity: 1;
+  }
+  .admin-nav-desktop {
+    display: none;
+  }
+  .admin-mobile-menu {
+    display: block;
+  }
+  .admin-mobile-menu > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    list-style: none;
+  }
+  .admin-mobile-menu > summary::-webkit-details-marker {
+    display: none;
+  }
+  .admin-mobile-menu > summary > span {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 11px;
+    border: 1px solid #ffffff28;
+    border-radius: 8px;
+    font-size: 12px;
+  }
+  .admin-mobile-menu > summary svg {
+    width: 18px;
+    height: 18px;
+  }
+  .admin-mobile-menu nav {
+    display: grid;
+    overflow: visible;
+    margin-top: 15px;
+  }
+  .admin-mobile-menu .mobile-logout-form {
+    display: block !important;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #ffffff1f;
+  }
+  .admin-mobile-menu .mobile-logout-form button {
+    color: white;
+    background: #ffffff0c;
+  }
+  .scroll-to-top {
+    right: 16px;
+    bottom: 88px;
+    width: 42px;
+    height: 42px;
+  }
+  .member-tabs {
+    display: none;
+  }
+  .bottom-nav {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
