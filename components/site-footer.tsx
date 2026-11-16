@@ -1,4 +1,4 @@
-import { Instagram } from "lucide-react";
+import { Camera } from "lucide-react";
 import Link from "next/link";
 
 const INSTAGRAM_URL = "https://www.instagram.com/waseda_fortylove_shinkan";
@@ -33,7 +33,7 @@ export function SiteFooter() {
               aria-label="Instagramを見る"
             >
               <span className="social-mark">
-                <Instagram />
+                <Camera aria-hidden="true" />
               </span>
               <span>Instagram</span>
             </a>
