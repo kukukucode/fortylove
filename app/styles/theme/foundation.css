@@ -20,6 +20,13 @@ body {
   outline-color: var(--lime);
 }
 
-.green { color: var(--green); }
-.brand { color: var(--green); letter-spacing: -.025em; }
-.admin-nav .brand { color: white; }
+.green {
+  color: var(--green);
+}
+.brand {
+  color: var(--green);
+  letter-spacing: -0.025em;
+}
+.admin-nav .brand {
+  color: white;
+}

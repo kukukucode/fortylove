@@ -20,7 +20,13 @@ export function ConfirmSubmitButton({
   }
 
   return (
-    <button type="submit" className={className} disabled={disabled || pending} aria-busy={pending} onClick={confirmSubmission}>
+    <button
+      type="submit"
+      className={className}
+      disabled={disabled || pending}
+      aria-busy={pending}
+      onClick={confirmSubmission}
+    >
       {pending ? "処理中…" : children}
     </button>
   );

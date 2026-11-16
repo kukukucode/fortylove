@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { parseRegistrationDraft, REGISTRATION_DRAFT_KEY, registrationDraftFromFormData } from "@/lib/registration-draft";
+import {
+  parseRegistrationDraft,
+  REGISTRATION_DRAFT_KEY,
+  registrationDraftFromFormData,
+} from "@/lib/registration-draft";
 
 export { REGISTRATION_DRAFT_KEY } from "@/lib/registration-draft";
 
@@ -16,8 +20,19 @@ export function RegistrationDraftKeeper() {
       sessionStorage.setItem(REGISTRATION_DRAFT_KEY, JSON.stringify(values));
       requestAnimationFrame(() => {
         for (const element of Array.from(form.elements)) {
-          if (!(element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement)) continue;
-          if (!element.name || element.type === "hidden" || element.name.endsWith("_choice") || element.name.startsWith("custom_")) continue;
+          if (!(
+            element instanceof HTMLInputElement ||
+            element instanceof HTMLTextAreaElement ||
+            element instanceof HTMLSelectElement
+          ))
+            continue;
+          if (
+            !element.name ||
+            element.type === "hidden" ||
+            element.name.endsWith("_choice") ||
+            element.name.startsWith("custom_")
+          )
+            continue;
           const restoredValue = Reflect.get(values, element.name);
           if (typeof restoredValue === "string") element.value = restoredValue;
         }
@@ -38,6 +53,8 @@ export function RegistrationDraftKeeper() {
 }
 
 export function ClearRegistrationDraft() {
-  useEffect(() => { sessionStorage.removeItem(REGISTRATION_DRAFT_KEY); }, []);
+  useEffect(() => {
+    sessionStorage.removeItem(REGISTRATION_DRAFT_KEY);
+  }, []);
   return null;
 }

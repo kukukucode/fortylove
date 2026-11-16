@@ -16,6 +16,9 @@ overrides:
   'sharp@<0.35.5': 0.35.5
   'source-map-js@>=1.0.0 <1.2.2': 1.2.2
   'vite@>=8.2.0 <8.2.4': 8.2.4
+  # typescript-estree still requests minimatch 10; its named minimatch API is
+  # retained in 11. Remove once upstream requires the fixed major version.
+  '@typescript-eslint/typescript-estree@>=8.69.0 <9>minimatch': 11.0.1
 
 patchedDependencies:
   '@next/eslint-plugin-next@15.5.28': patches/@next__eslint-plugin-next@15.5.28.patch

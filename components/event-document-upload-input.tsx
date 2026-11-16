@@ -40,7 +40,11 @@ export function EventDocumentUploadInput({ optional = false }: { optional?: bool
     const validationError = validateEventDocumentFile(file);
     if (validationError) {
       setUploadState("error");
-      setMessage(validationError === "size" ? `PDFは${EVENT_DOCUMENT_MAX_LABEL}以下にしてください。` : "PDF形式のファイルを選択してください。");
+      setMessage(
+        validationError === "size"
+          ? `PDFは${EVENT_DOCUMENT_MAX_LABEL}以下にしてください。`
+          : "PDF形式のファイルを選択してください。",
+      );
       if (inputRef.current) inputRef.current.value = "";
       return;
     }
@@ -54,7 +58,7 @@ export function EventDocumentUploadInput({ optional = false }: { optional?: bool
         body: JSON.stringify({ fileName: file.name, fileSize: file.size, fileType: file.type }),
       });
       if (!tokenResponse.ok) throw new Error("token");
-      const token = await tokenResponse.json() as { signedUrl: string; path: string };
+      const token = (await tokenResponse.json()) as { signedUrl: string; path: string };
       const uploadBody = new FormData();
       uploadBody.append("cacheControl", "3600");
       uploadBody.append("", file);
@@ -70,16 +74,29 @@ export function EventDocumentUploadInput({ optional = false }: { optional?: bool
       setMessage("アップロードが完了しました。フォームを保存してください。");
     } catch {
       setUploadState("error");
-      setMessage("PDFをアップロードできませんでした。通信状態を確認して、もう一度選択してください。");
+      setMessage(
+        "PDFをアップロードできませんでした。通信状態を確認して、もう一度選択してください。",
+      );
       if (inputRef.current) inputRef.current.value = "";
     }
   }
 
-  return <label className="full">関連資料（PDF・{optional ? "任意・" : ""}{EVENT_DOCUMENT_MAX_LABEL}まで）
-    <input ref={inputRef} type="file" accept="application/pdf,.pdf" onChange={(event) => void upload(event.target.files?.[0])} />
-    <input type="hidden" name="document_upload_state" value={uploadState} />
-    <input type="hidden" name="document_path" value={uploadedPath} />
-    <input type="hidden" name="document_name" value={uploadedName} />
-    <small aria-live="polite">{message || "ファイルはSupabaseへ直接、安全にアップロードされます。"}</small>
-  </label>;
+  return (
+    <label className="full">
+      関連資料（PDF・{optional ? "任意・" : ""}
+      {EVENT_DOCUMENT_MAX_LABEL}まで）
+      <input
+        ref={inputRef}
+        type="file"
+        accept="application/pdf,.pdf"
+        onChange={(event) => void upload(event.target.files?.[0])}
+      />
+      <input type="hidden" name="document_upload_state" value={uploadState} />
+      <input type="hidden" name="document_path" value={uploadedPath} />
+      <input type="hidden" name="document_name" value={uploadedName} />
+      <small aria-live="polite">
+        {message || "ファイルはSupabaseへ直接、安全にアップロードされます。"}
+      </small>
+    </label>
+  );
 }

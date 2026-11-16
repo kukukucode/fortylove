@@ -8,9 +8,24 @@ export function FormFeedback({ successMessage }: { successMessage?: string }) {
   const wasPending = useRef(false);
   const [complete, setComplete] = useState(false);
   useEffect(() => {
-    if (pending) { wasPending.current = true; setComplete(false); }
-    else if (wasPending.current) { wasPending.current = false; setComplete(true); router.refresh(); }
+    if (pending) {
+      wasPending.current = true;
+      setComplete(false);
+    } else if (wasPending.current) {
+      wasPending.current = false;
+      setComplete(true);
+      router.refresh();
+    }
   }, [pending, router]);
-  if (pending) return <span className="form-pending" role="status">処理中です…</span>;
-  return complete && successMessage ? <span className="form-success" role="status">{successMessage}</span> : null;
+  if (pending)
+    return (
+      <span className="form-pending" role="status">
+        処理中です…
+      </span>
+    );
+  return complete && successMessage ? (
+    <span className="form-success" role="status">
+      {successMessage}
+    </span>
+  ) : null;
 }

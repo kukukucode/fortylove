@@ -14,6 +14,7 @@
 - [本番運用チェックリスト](operations/production-checklist.md) — 未完了の本番確認と完了状況
 - [データベース変更手順](operations/database.md) — Supabaseの変更前後、検証、異常時対応
 - [監視・品質試験](operations/quality.md) — Health監視、Sentry、CI、復元試験、性能評価
+- [チャットBotの原本・検索](operations/chatbot-retrieval.md) — 版管理の適用順序、権限、復元、検索評価
 
 本番作業では、最初に本番運用チェックリストを確認し、DB変更がある場合だけデータベース変更手順を併用します。
 

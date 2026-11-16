@@ -13,13 +13,15 @@ export function ScrollToTop() {
     return () => window.removeEventListener("scroll", updateVisibility);
   }, []);
 
-  return <button
-    type="button"
-    className={`scroll-to-top${visible ? " visible" : ""}`}
-    aria-label="ページ上部へ戻る"
-    title="ページ上部へ戻る"
-    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-  >
-    <ArrowUp />
-  </button>;
+  return (
+    <button
+      type="button"
+      className={`scroll-to-top${visible ? " visible" : ""}`}
+      aria-label="ページ上部へ戻る"
+      title="ページ上部へ戻る"
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+    >
+      <ArrowUp />
+    </button>
+  );
 }

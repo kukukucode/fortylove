@@ -8,7 +8,8 @@ export function AvatarInput() {
   const [status, setStatus] = useState("選択した画像は正方形にトリミング・圧縮されます");
 
   return (
-    <label className="full">プロフィール画像（任意）
+    <label className="full">
+      プロフィール画像（任意）
       <input
         name="avatar"
         type="file"
@@ -28,17 +29,19 @@ export function AvatarInput() {
             const canvas = document.createElement("canvas");
             canvas.width = Math.max(1, outputSize);
             canvas.height = Math.max(1, outputSize);
-            canvas.getContext("2d")?.drawImage(
-              bitmap,
-              sourceX,
-              sourceY,
-              sourceSize,
-              sourceSize,
-              0,
-              0,
-              canvas.width,
-              canvas.height,
-            );
+            canvas
+              .getContext("2d")
+              ?.drawImage(
+                bitmap,
+                sourceX,
+                sourceY,
+                sourceSize,
+                sourceSize,
+                0,
+                0,
+                canvas.width,
+                canvas.height,
+              );
             bitmap.close();
 
             const blob = await new Promise<Blob | null>((resolve) =>
@@ -50,7 +53,9 @@ export function AvatarInput() {
             const files = new DataTransfer();
             files.items.add(compressed);
             input.files = files.files;
-            setStatus(`正方形にトリミング・圧縮済み（${Math.max(1, Math.round(compressed.size / 1024))}KB）`);
+            setStatus(
+              `正方形にトリミング・圧縮済み（${Math.max(1, Math.round(compressed.size / 1024))}KB）`,
+            );
           } catch {
             setStatus("圧縮できなかったため元の画像を使用します（2MBまで）");
           }
