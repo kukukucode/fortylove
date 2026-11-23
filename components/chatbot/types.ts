@@ -1,5 +1,7 @@
 export type ChatbotMode = "preview" | "admin" | "member";
 
+export const GENERAL_ANSWER_LABEL = "一般的な回答";
+
 export type ChatbotChoice = {
   id: string;
   label: string;

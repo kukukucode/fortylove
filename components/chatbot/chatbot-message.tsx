@@ -1,5 +1,5 @@
 import { UserRoundCheck } from "lucide-react";
-import type { ChatbotChoice, ChatbotMessage, ChatbotMode } from "./types";
+import { GENERAL_ANSWER_LABEL, type ChatbotChoice, type ChatbotMessage, type ChatbotMode } from "./types";
 
 type ChatbotMessageProps = {
   item: ChatbotMessage;
@@ -26,38 +26,52 @@ export function ChatbotMessageView({
   onEscalate,
   onDecline,
 }: ChatbotMessageProps) {
+  const choices = item.choices ?? [];
+  const standaloneGeneralAnswerLabel =
+    `${GENERAL_ANSWER_LABEL}を見る${mode === "preview" ? "" : "（利用回数1件）"}`;
+
   return (
     <div className={`chat-message ${item.role}`}>
       <p>{item.text}</p>
-      {!!item.choices?.length && (
+      {!!choices.length && (
         <div className="chatbot-choice-list" aria-label="回答候補">
-          {item.choices.map((choice) => (
+          {choices.map((choice) => (
             <button
               type="button"
               key={choice.id}
               disabled={sending}
               onClick={() => onChoose(choice)}
             >
-              <span>{choice.label}</span>
+              <span>{choice.label}.</span>
               {choice.title}
             </button>
           ))}
           <button type="button" disabled={sending} onClick={onChooseOther}>
-            <span>{item.choices.length + 1}</span>その他（チャットに入力）
+            <span>{choices.length + 1}.</span>
+            その他
           </button>
+          {item.generalTicket && (
+            <button type="button" disabled={sending} onClick={() => onGeneralAnswer(item)}>
+              <span>{choices.length + 2}.</span>
+              {GENERAL_ANSWER_LABEL}
+            </button>
+          )}
           <small>
             ボタンを押すか、番号を入力してください。「その他」では質問を詳しく入力できます。
           </small>
+          {item.generalTicket && mode !== "preview" && (
+            <small>一般的な回答を選ぶと、利用回数に1件加算されます。</small>
+          )}
         </div>
       )}
-      {item.generalTicket && (
+      {item.generalTicket && !choices.length && (
         <button
           type="button"
           className="general-answer-button"
           disabled={sending}
           onClick={() => onGeneralAnswer(item)}
         >
-          一般的な回答を見る{mode !== "preview" && "（利用回数1件）"}
+          {standaloneGeneralAnswerLabel}
         </button>
       )}
       {item.offerEscalation && !item.decided && (

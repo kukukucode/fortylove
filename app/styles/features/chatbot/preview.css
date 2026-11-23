@@ -190,15 +190,8 @@
   opacity: 0.5;
 }
 .chatbot-choice-list button span {
-  display: grid;
-  width: 22px;
-  height: 22px;
-  flex: 0 0 22px;
-  place-items: center;
-  border-radius: 7px;
-  background: var(--green);
-  color: white;
-  font-size: 11px;
+  flex: 0 0 1.25em;
+  font-variant-numeric: tabular-nums;
 }
 .chatbot-choice-list > small {
   margin: 2px 0 0;
