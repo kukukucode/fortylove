@@ -179,7 +179,6 @@ export async function POST(request: Request) {
       kind: "knowledge",
     });
   }
-  if (decision.kind === "choices") return choiceResponse(decision.records);
   if (decision.kind === "synthesize") {
     const synthesized = await generateGroundedAnswer(question, decision.records, { audience });
     if (synthesized) {
