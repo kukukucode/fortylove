@@ -62,7 +62,6 @@ export type RankedKnowledge = {
 export type KnowledgeDecision =
   | { kind: "none" }
   | { kind: "direct"; record: ChatbotKnowledge }
-  | { kind: "choices"; records: ChatbotKnowledge[] }
   | { kind: "synthesize"; records: ChatbotKnowledge[] };
 
 export const KNOWLEDGE_THRESHOLDS = {
@@ -155,15 +154,9 @@ export function decideKnowledgeResponse(
   });
   const best = ranked[0];
   if (!best) return { kind: "none" };
+  // Similarity establishes relevance. Only an exact title match answers directly.
   if (normalizeChatText(question) === normalizeChatText(best.record.title))
     return { kind: "direct", record: best.record };
-  const close = ranked.filter((item) => Math.abs(best.score - item.score) < 0.08);
-  const multiple =
-    ranked.length > 1 && /(?:、|と|も|けど|ながら|それに|さらに|両方)/.test(question);
-  // Similarity establishes relevance, never that a passage answers the question.
-  // Only exact FAQ/section matches (or an explicitly selected candidate) bypass grounding.
-  if (close.length > 1 && !multiple)
-    return { kind: "choices", records: close.slice(0, 3).map((item) => item.record) };
   return { kind: "synthesize", records: ranked.slice(0, 3).map((item) => item.record) };
 }
 

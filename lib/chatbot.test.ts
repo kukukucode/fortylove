@@ -35,7 +35,7 @@ describe("chatbot matching", () => {
     expect(isEventQuestion("新歓はいつまでですか？")).toBe(false));
   it("参加条件の質問をイベント質問と誤判定しない", () =>
     expect(isEventQuestion("新歓は初心者でも参加できますか？")).toBe(false));
-  it("近い回答が複数ある曖昧な質問は最大3件の選択肢にする", () => {
+  it("近い回答が複数あっても上位3件で生成を試みる", () => {
     const records = [
       { ...knowledge[0], id: "fee", title: "会費", content: "会費の回答", keywords: ["費用"] },
       {
@@ -52,10 +52,17 @@ describe("chatbot matching", () => {
         content: "イベント費の回答",
         keywords: ["費用"],
       },
+      {
+        ...knowledge[0],
+        id: "camp-fee",
+        title: "合宿費",
+        content: "合宿費の回答",
+        keywords: ["費用"],
+      },
     ];
     const decision = decideKnowledgeResponse("費用について知りたい", records);
-    expect(decision.kind).toBe("choices");
-    if (decision.kind === "choices") expect(decision.records).toHaveLength(3);
+    if (decision.kind !== "synthesize") throw new Error("expected synthesis");
+    expect(decision.records).toHaveLength(3);
   });
   it("複数の関心を含む質問はGemini統合対象にする", () => {
     const records = [

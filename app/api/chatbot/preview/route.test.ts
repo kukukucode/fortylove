@@ -43,6 +43,7 @@ beforeEach(() => {
   mocks.rpc.mockResolvedValue({ data: true });
   mocks.read.mockResolvedValue([]);
   mocks.embed.mockRejectedValue(new Error("Offline"));
+  mocks.generate.mockReset().mockResolvedValue(null);
 });
 afterEach(() => vi.unstubAllEnvs());
 const request = (body: object) =>
@@ -50,6 +51,49 @@ const request = (body: object) =>
     method: "POST",
     body: JSON.stringify(body),
   });
+const combinedQuestion = "入会金はいくら？練習頻度は？";
+const candidateBase = {
+  category: "案内",
+  priority: 0,
+  is_active: true,
+  lexical_score: 0.6,
+};
+const combinedQuestionCandidates = [
+  { ...candidateBase, id: "fee", title: "入会金", content: "5000円です。", keywords: ["入会金"] },
+  {
+    ...candidateBase,
+    id: "practice",
+    title: "練習頻度",
+    content: "週に2回です。",
+    keywords: ["練習頻度"],
+  },
+];
+
+it("スコアが近い異なる資料をGeminiでまとめて返す", async () => {
+  const answer = "入会金は5000円で、練習は週に2回です。";
+  mocks.read.mockResolvedValue(combinedQuestionCandidates);
+  mocks.generate.mockResolvedValue(answer);
+  const result = await POST(request({ message: combinedQuestion }));
+  expect(mocks.generate).toHaveBeenCalledTimes(1);
+  expect(mocks.generate).toHaveBeenCalledWith(combinedQuestion, combinedQuestionCandidates, {
+    audience: "member",
+  });
+  const data = await result.json();
+  expect(data).toMatchObject({ kind: "gemini", answer });
+  expect(data.choices).toBeUndefined();
+});
+it("Geminiの回答を採用できなければ選択肢を返す", async () => {
+  mocks.read.mockResolvedValue(combinedQuestionCandidates);
+  const result = await POST(request({ message: combinedQuestion }));
+  expect(mocks.generate).toHaveBeenCalledTimes(1);
+  expect(await result.json()).toMatchObject({
+    kind: "choices",
+    choices: [
+      { id: "fee", title: "入会金" },
+      { id: "practice", title: "練習頻度" },
+    ],
+  });
+});
 it("資料なしでは回答生成を呼ばず一般回答ボタンを提案", async () => {
   const result = await POST(request({ message: "ラケットの選び方" }));
   expect((await result.json()).generalTicket).toBeTruthy();
