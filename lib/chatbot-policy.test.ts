@@ -17,7 +17,15 @@ it("10ファイル・合計1MBの境界と重複名を検証する", () => {
 });
 it("一般回答でクラブ固有の判断を受け付けない", () => {
   expect(allowsGeneralAnswer("ラケットの選び方を教えて")).toBe(true);
-  for (const question of ["Fortyloveのラケットの選び方", "テニスの持ち物と参加費", "来月の会費", "入会できますか"]) expect(allowsGeneralAnswer(question)).toBe(false);
+  expect(allowsGeneralAnswer("ボールの表面けば立つのってなんで")).toBe(true);
+  expect(allowsGeneralAnswer("テニスボールの中身は？")).toBe(true);
+  for (const question of [
+    "Fortyloveのラケットの選び方",
+    "Fortyloveで使うボールの素材は？",
+    "テニスの持ち物と参加費",
+    "来月の会費",
+    "入会できますか",
+  ]) expect(allowsGeneralAnswer(question)).toBe(false);
 });
 it("一般回答の同意券は本人・対象・質問・有効期限を検証する", () => {
   vi.stubEnv("SESSION_SECRET", "test-only-long-secret");

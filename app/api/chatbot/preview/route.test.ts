@@ -94,10 +94,82 @@ it("Geminiの回答を採用できなければ選択肢を返す", async () => {
     ],
   });
 });
+it("入会金は入会費として検索し、一意の項目の本文を返す", async () => {
+  mocks.read.mockResolvedValue([
+    { ...candidateBase, id: "fee", title: "入会費はいくらですか？", content: "5000円です。", keywords: ["入会費"] },
+    { ...candidateBase, id: "camp-fee", title: "合宿費はいくらですか？", content: "8000円です。", keywords: ["いくら"] },
+  ]);
+  const result = await POST(request({ message: "入会金はいくら？" }));
+  expect(mocks.read).toHaveBeenCalledWith(["member.md"], "入会費はいくら?", undefined, undefined);
+  expect(await result.json()).toMatchObject({ kind: "knowledge", answer: "5000円です。" });
+  expect(mocks.embed).not.toHaveBeenCalled();
+  expect(mocks.generate).not.toHaveBeenCalled();
+});
+it("参加費の質問で参加だけが一致した項目は選択肢に含めない", async () => {
+  mocks.read.mockResolvedValue([
+    { ...candidateBase, id: "required", title: "毎回参加は必須ですか？", content: "任意です。", keywords: ["参加"] },
+    { ...candidateBase, id: "entry", title: "大会の参加費", content: "参加費は別途かかります。", keywords: ["大会", "参加費"] },
+  ]);
+  const result = await POST(request({ message: "参加費の内訳を知りたい" }));
+  const data = await result.json();
+  expect(data.kind).toBe("choices");
+  expect(data.choices).toEqual([{ id: "entry", label: "1", title: "大会の参加費" }]);
+});
+it("雨天の質問で練習だけが一致した候補は表示しない", async () => {
+  mocks.read.mockResolvedValue([
+    { ...candidateBase, id: "frequency", title: "練習頻度", content: "週に2回です。", keywords: ["練習"] },
+    { ...candidateBase, id: "practice", title: "初心者の練習", content: "初心者も歓迎です。", keywords: ["練習"] },
+  ]);
+  const result = await POST(request({ message: "練習は雨でもやる？" }));
+  const data = await result.json();
+  expect(data.kind).toBe("fallback");
+  expect(data.choices).toBeUndefined();
+});
 it("資料なしでは回答生成を呼ばず一般回答ボタンを提案", async () => {
   const result = await POST(request({ message: "ラケットの選び方" }));
   expect((await result.json()).generalTicket).toBeTruthy();
   expect(mocks.generate).not.toHaveBeenCalled();
+});
+it("ボールの表面の質問は資料で答えられなくても一般回答に進める", async () => {
+  const message = "ボールの表面けば立つのってなんで";
+  const records = [{
+    ...candidateBase,
+    id: "ball-fee",
+    title: "練習のボール代",
+    content: "ボール代は会費に含まれています。",
+    keywords: ["ボール"],
+  }];
+  mocks.read.mockResolvedValue(records);
+  mocks.generate
+    .mockResolvedValueOnce(null)
+    .mockResolvedValueOnce("表面のフェルトは、ボールの速さや跳ね方などに影響します。");
+
+  const fallback = await (await POST(request({ message }))).json();
+  expect(fallback).toMatchObject({ kind: "fallback", generalTicket: expect.any(String) });
+  expect(mocks.generate).toHaveBeenCalledTimes(1);
+  expect(mocks.generate).toHaveBeenCalledWith(message, records, { audience: "member" });
+  const general = await (await POST(request({ message, generalTicket: fallback.generalTicket }))).json();
+  expect(general).toMatchObject({
+    kind: "general",
+    answer: expect.stringContaining("公式回答ではありません"),
+  });
+  expect(general.answer).toContain("フェルト");
+  expect(mocks.generate).toHaveBeenLastCalledWith(message, [], { general: true, audience: "member" });
+});
+
+it("クラブ固有の質問へつながる場合は資料から回答できなくても一般回答に進めない", async () => {
+  const message = "ちなみに、ボールの表面の素材は？";
+  mocks.read.mockResolvedValue([{
+    ...candidateBase,
+    id: "equipment",
+    title: "練習用具の案内",
+    content: "練習用具は事前の案内をご確認ください。",
+    keywords: ["ボール"],
+  }]);
+  const result = await POST(request({ message, history: ["Fortyloveで使う練習用具を教えて"] }));
+  const data = await result.json();
+  expect(data.kind).toBe("fallback");
+  expect(data.generalTicket).toBeUndefined();
 });
 it("固有情報に一般回答を提案せず有人対応を案内", async () => {
   const data = await (await POST(request({ message: "会費はいくらですか" }))).json();

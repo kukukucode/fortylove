@@ -84,6 +84,13 @@ describe("chatbot matching", () => {
       record: { id: "annual" },
     });
   });
+  it("同じキーワードで異なる本文が見つかれば一件に決めつけない", () => {
+    const records = [
+      { ...knowledge[0], id: "court", title: "通常練習の会場", content: "本部コートです。", keywords: ["集合場所"] },
+      { ...knowledge[0], id: "camp", title: "合宿の会場", content: "合宿所です。", keywords: ["集合場所"] },
+    ];
+    expect(decideKnowledgeResponse("集合場所を教えて", records).kind).toBe("synthesize");
+  });
   it("空席数には回答時点である旨を含める", () => {
     const answer = formatEventAnswer("まだ空きある？", {
       id: "e",
