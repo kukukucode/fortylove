@@ -43,7 +43,12 @@ test("super_adminの常設チャットで選択肢・追従・入力消去・会
   await page.getByRole("button", { name: "チャットを開く" }).click();
   const dialog = page.getByRole("dialog");
   const input = dialog.getByRole("textbox", { name: "質問", exact: true });
+  await expect(input).toHaveCSS("height", "46px");
+  await input.fill("長い質問の入力欄を確認します。".repeat(15));
+  await expect.poll(async () => (await input.boundingBox())!.height).toBeGreaterThan(46);
+  await expect.poll(async () => (await input.boundingBox())!.height).toBeLessThanOrEqual(100);
   await input.fill("質問です");
+  await expect(input).toHaveCSS("height", "46px");
   await dialog.getByRole("button", { name: "送信", exact: true }).click();
   await expect(input).toHaveValue("");
   const choice = dialog.getByRole("button", { name: /非常に長い候補/ });
@@ -122,7 +127,42 @@ test("FAQの持ち手ドラッグ・横スワイプは削除や保存を即実�
     await page.mouse.up();
   }
   await expect(cards.first()).not.toHaveAttribute("data-faq-id", firstId!);
+  const confirmation = page.waitForEvent("dialog").then(async (dialog) => {
+    const message = dialog.message();
+    await dialog.dismiss();
+    return message;
+  });
+  await cards.first().getByRole("button", { name: "削除", exact: true }).click();
+  expect(await confirmation).toBe("削除してよいですか？");
   expect(mutations).toBe(0);
+});
+
+test("スマホの管理メニューは本文を押し下げずに全画面で開く", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile", "モバイル表示専用の確認");
+  await page.goto("/admin/events");
+  const trigger = page.getByRole("button", { name: "メニュー", exact: true });
+  const triggerBox = (await trigger.boundingBox())!;
+  const content = page.locator(".admin-main");
+  const contentY = (await content.boundingBox())!.y;
+  await trigger.click();
+
+  const menu = page.getByRole("dialog", { name: "管理メニュー" });
+  await expect(menu).toBeVisible();
+  const size = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+  const bounds = (await menu.boundingBox())!;
+  expect(bounds).toMatchObject({ x: 0, y: 0, width: size.width, height: size.height });
+  expect((await content.boundingBox())!.y).toBe(contentY);
+  const close = menu.getByRole("button", { name: "メニューを閉じる" });
+  await expect(close).toBeFocused();
+  expect(await close.boundingBox()).toEqual(triggerBox);
+  await page.keyboard.press("Escape");
+  await expect(menu).not.toBeVisible();
+  await expect(trigger).toBeFocused();
+
+  await trigger.click();
+  await menu.getByRole("link", { name: "FAQ管理" }).click();
+  await expect(page).toHaveURL(/\/admin\/faqs$/);
+  await expect(menu).not.toBeVisible();
 });
 
 test("一般利用画面は内部情報を隠し、一般回答は押下後のみ", async ({ page, context }) => {

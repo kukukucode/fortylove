@@ -1,4 +1,4 @@
-/* Account menu, member tabs, admin mobile navigation, and scroll helpers. */
+/* Account menu, member tabs, and admin mobile navigation. */
 .avatar {
   cursor: pointer;
   list-style: none;
@@ -132,44 +132,6 @@
 .admin-mobile-menu {
   display: none;
 }
-.scroll-to-top {
-  position: fixed;
-  z-index: 40;
-  right: 24px;
-  bottom: 24px;
-  display: grid;
-  width: 46px;
-  height: 46px;
-  padding: 0;
-  place-items: center;
-  border: 1px solid #ffffff66;
-  border-radius: 50%;
-  background: #17251fd9;
-  color: white;
-  box-shadow: 0 10px 28px #17251f33;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(10px);
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease,
-    background 0.2s ease;
-  backdrop-filter: blur(8px);
-}
-.scroll-to-top.visible {
-  opacity: 0.82;
-  pointer-events: auto;
-  transform: translateY(0);
-}
-.scroll-to-top:hover {
-  opacity: 1;
-  background: var(--green);
-}
-.scroll-to-top svg {
-  width: 20px;
-  height: 20px;
-}
-
 @media (max-width: 800px) {
   .user-menu .avatar {
     width: 38px;
@@ -190,31 +152,79 @@
   .admin-nav-desktop {
     display: none;
   }
+  .admin-nav {
+    position: sticky;
+    top: 0;
+    z-index: 60;
+  }
   .admin-mobile-menu {
     display: block;
   }
-  .admin-mobile-menu > summary {
+  .admin-menu-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    cursor: pointer;
-    list-style: none;
   }
-  .admin-mobile-menu > summary::-webkit-details-marker {
-    display: none;
-  }
-  .admin-mobile-menu > summary > span {
-    display: flex;
-    align-items: center;
-    gap: 7px;
+  .admin-menu-header .admin-menu-toggle {
+    gap: 8px;
+    width: 105px;
+    min-height: 44px;
     padding: 9px 11px;
-    border: 1px solid #ffffff28;
-    border-radius: 8px;
+    border: 1px solid #ffffff55;
+    color: white;
     font-size: 12px;
   }
-  .admin-mobile-menu > summary svg {
+  .admin-menu-mark {
+    display: grid;
     width: 18px;
     height: 18px;
+    flex: 0 0 18px;
+    place-items: center;
+  }
+  .admin-menu-mark > span {
+    grid-area: 1 / 1;
+    width: 18px;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    transform: var(--bars);
+  }
+  .admin-menu-mark > span:first-child {
+    --bars: translateY(-5px);
+    --cross: rotate(45deg);
+  }
+  .admin-menu-mark > span:nth-child(2) {
+    --bars: scaleX(1);
+    --cross: scaleX(0);
+  }
+  .admin-menu-mark > span:last-child {
+    --bars: translateY(5px);
+    --cross: rotate(-45deg);
+  }
+  .admin-menu-toggle.is-open .admin-menu-mark > span {
+    transform: var(--cross);
+    animation: admin-menu-morph 220ms ease-out;
+  }
+  .admin-menu-toggle.is-closing .admin-menu-mark > span {
+    animation: admin-menu-morph 220ms ease-out reverse;
+  }
+  .admin-menu-dialog {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    padding: 18px 20px max(18px, env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 0;
+    background: #202b43;
+    color: white;
+  }
+  .admin-menu-dialog[open] {
+    animation: admin-menu-appear 160ms ease-out;
   }
   .admin-mobile-menu nav {
     display: grid;
@@ -231,16 +241,26 @@
     color: white;
     background: #ffffff0c;
   }
-  .scroll-to-top {
-    right: 16px;
-    bottom: 88px;
-    width: 42px;
-    height: 42px;
-  }
   .member-tabs {
     display: none;
   }
   .bottom-nav {
     grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@keyframes admin-menu-morph {
+  from { transform: var(--bars); }
+  to { transform: var(--cross); }
+}
+@keyframes admin-menu-appear {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-menu-dialog[open],
+  .admin-menu-toggle.is-open .admin-menu-mark > span,
+  .admin-menu-toggle.is-closing .admin-menu-mark > span {
+    animation: none;
   }
 }
