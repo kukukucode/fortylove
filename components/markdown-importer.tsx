@@ -166,6 +166,7 @@ export function MarkdownImporter() {
         <Upload />
         <span>ファイルを選択、またはここへドロップ</span>
         <input
+          className="sr-only"
           type="file"
           multiple
           accept=".md"

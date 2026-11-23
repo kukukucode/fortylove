@@ -334,6 +334,7 @@ form:has(> .form-pending) > button {
   margin-top: 12px;
 }
 .import-drop {
+  position: relative;
   border: 1px dashed #9db49d;
   border-radius: 14px;
   background: #f6f9f1;
@@ -346,11 +347,9 @@ form:has(> .form-pending) > button {
   background: #e4efd8;
   border-color: var(--green);
 }
-.import-drop input {
-  max-width: 100%;
-  font-size: 12px;
-  border: 0;
-  background: transparent;
+.import-drop:focus-within {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
 }
 .import-files {
   list-style: none;

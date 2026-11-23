@@ -251,7 +251,12 @@ test("取り込み前に1001件超過を表示し送信しない", async ({ page
   const content = Array.from({ length: 1001 }, (_, i) => `## 質問${i}\n回答です。`).join("\n");
   const input = page.locator(".import-drop input");
   await expect(input).toBeEnabled();
-  await input.setInputFiles({
+  await expect(input).toHaveCSS("clip", "rect(0px, 0px, 0px, 0px)");
+  const [fileChooser] = await Promise.all([
+    page.waitForEvent("filechooser"),
+    page.getByText("ファイルを選択、またはここへドロップ", { exact: true }).click(),
+  ]);
+  await fileChooser.setFiles({
     name: "limit.md",
     mimeType: "text/markdown",
     buffer: Buffer.from(content),
