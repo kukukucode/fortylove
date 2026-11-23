@@ -40,8 +40,7 @@ export async function updateChatbotAudienceSources(formData: FormData) {
     ...new Set(
       formData
         .getAll("source_names")
-        .map((value) => String(value).trim())
-        .filter(Boolean),
+        .filter((value): value is string => typeof value === "string" && value.trim() !== ""),
     ),
   ];
   const { audience, source_names: validatedSourceNames } = parseActionInput(
@@ -113,16 +112,20 @@ export async function updateChatbotEscalationEmail(formData: FormData) {
 
 export async function deleteChatbotMarkdownSource(formData: FormData) {
   const user = await requireSuperAdmin();
-  const sourceName = parseActionInput(
-    markdownSourceNameSchema,
-    formText(formData, "source_name"),
-    "/admin/chatbot?error=markdown-source",
-  );
+  const sourceName = markdownSourceNameSchema.safeParse(formData.get("source_name"));
+  if (!sourceName.success) return { error: "markdown-source" };
   const client = db();
   const { error } = await client.rpc("delete_chatbot_document", {
     p_actor: user.id,
-    p_name: sourceName,
+    p_name: sourceName.data,
   });
-  if (error) redirect("/admin/chatbot?error=markdown-delete");
-  redirect("/admin/chatbot?source_deleted=1");
+  if (error) {
+    console.error("Failed to delete chatbot Markdown source", { code: error.code });
+    return {
+      error: error.code === "PGRST202" || error.code === "42883"
+        ? "markdown-delete-migration"
+        : "markdown-delete",
+    };
+  }
+  return {};
 }

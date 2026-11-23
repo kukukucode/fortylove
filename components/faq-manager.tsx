@@ -150,12 +150,7 @@ export function FaqManager({
               >
                 <ArrowDown />
               </button>
-              <button
-                type="button"
-                onClick={() => setRevealed(revealed === faq.id ? null : faq.id)}
-              >
-                削除操作
-              </button>
+              {revealed !== faq.id && <FaqDeleteForm id={faq.id} disabled={pending} />}
             </div>
             <details>
               <summary
@@ -245,20 +240,26 @@ export function FaqManager({
               </form>
             </details>
             {revealed === faq.id && (
-              <form action={deleteFaq} className="faq-delete-form">
-                <FormFeedback />
-                <input type="hidden" name="faq_id" value={faq.id} />
-                <ConfirmSubmitButton
-                  className="danger"
-                  message={`「${faq.question}」を削除しますか？`}
-                >
-                  削除
-                </ConfirmSubmitButton>
-              </form>
+              <FaqDeleteForm id={faq.id} disabled={pending} swiped />
             )}
           </article>
         ))}
       </div>
     </section>
+  );
+}
+
+function FaqDeleteForm({ id, disabled, swiped }: { id: string; disabled: boolean; swiped?: boolean }) {
+  return (
+    <form action={deleteFaq} className={swiped ? "faq-delete-form" : undefined}>
+      <input type="hidden" name="faq_id" value={id} />
+      <ConfirmSubmitButton
+        className={swiped ? "danger" : undefined}
+        disabled={disabled}
+        message="削除してよいですか？"
+      >
+        削除
+      </ConfirmSubmitButton>
+    </form>
   );
 }

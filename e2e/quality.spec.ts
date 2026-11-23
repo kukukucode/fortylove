@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { createHash } from "node:crypto";
 import { adminId, assertDb, eventId, loginAs, memberId, qualityDb, superAdminId } from "./quality-helpers";
 
 test.beforeAll(async () => {
@@ -114,4 +115,57 @@ test("主要レスポンスに安全ヘッダー、HealthはDB実測・認証必
   expect((await request.get("/api/ops/monitor-config")).status()).toBe(401);
   const settings = await request.get("/api/ops/monitor-config", { headers: { authorization: "Bearer quality-monitor-secret" } });
   expect(settings.status()).toBe(200); expect(settings.headers()["cache-control"]).toBe("no-store");
+});
+
+test("実DB: 有効なMarkdownを保存名のまま削除し、両方の参照設定を解除する", async ({ page }) => {
+  const sourceName = " 現行用テスト.md";
+  const markdown = "## 現行用テスト\n動作確認用の会費情報です。";
+  const { data: previous } = await assertDb(qualityDb.from("app_settings")
+    .select("chatbot_admin_sources,chatbot_member_sources").eq("id", 1).single());
+  await assertDb(qualityDb.rpc("publish_chatbot_document", {
+    p_actor: superAdminId,
+    p_name: sourceName,
+    p_markdown: markdown,
+    p_hash: createHash("sha256").update(markdown).digest("hex"),
+    p_model: "gemini-embedding-001",
+    p_rows: [{
+      title: "現行用テスト", content: "動作確認用の会費情報です。", category: "試験",
+      keywords: ["会費"], source_section: "1:現行用テスト", embedding: Array(768).fill(0.1),
+    }],
+    p_expected_version: 0,
+  }));
+
+  try {
+    await assertDb(qualityDb.from("app_settings").update({
+      chatbot_admin_sources: [...previous!.chatbot_admin_sources, sourceName],
+      chatbot_member_sources: [...previous!.chatbot_member_sources, sourceName],
+    }).eq("id", 1));
+    await loginAs(page, "Owner");
+    await page.goto("/admin/chatbot");
+    const card = page.locator(".knowledge-source-card").filter({ hasText: sourceName.trim() });
+    const remove = card.getByRole("button", { name: "削除", exact: true });
+    page.once("dialog", (dialog) => dialog.dismiss());
+    await remove.click();
+    await expect(card).toBeVisible();
+    page.once("dialog", (dialog) => dialog.accept());
+    await remove.click();
+    await expect(page.getByText("Markdownと回答データを削除しました。")).toBeVisible();
+    await expect(card).toHaveCount(0);
+    const [documents, chunks, settings] = await Promise.all([
+      assertDb(qualityDb.from("chatbot_documents").select("id").eq("source_name", sourceName)),
+      assertDb(qualityDb.from("chatbot_knowledge").select("id").eq("source_name", sourceName)),
+      assertDb(qualityDb.from("app_settings").select("chatbot_admin_sources,chatbot_member_sources")
+        .eq("id", 1).single()),
+    ]);
+    expect(documents.data).toEqual([]);
+    expect(chunks.data).toEqual([]);
+    expect(settings.data).toEqual(previous);
+  } finally {
+    const remaining = await assertDb(qualityDb.from("chatbot_documents").select("id")
+      .eq("source_name", sourceName).maybeSingle());
+    if (remaining.data) {
+      await assertDb(qualityDb.rpc("delete_chatbot_document", { p_actor: superAdminId, p_name: sourceName }));
+    }
+    await assertDb(qualityDb.from("app_settings").update(previous!).eq("id", 1));
+  }
 });

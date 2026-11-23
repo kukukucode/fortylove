@@ -7,7 +7,6 @@ import {
   CalendarDays,
   CircleHelp,
   LogOut,
-  Menu,
   Settings,
   ShieldCheck,
   TicketCheck,
@@ -15,7 +14,7 @@ import {
 } from "lucide-react";
 import { logout } from "@/app/actions";
 import { ConfirmSubmitButton } from "./confirm-submit-button";
-import { CloseMenuOnNavigation } from "./close-menu-on-navigation";
+import { AdminMobileMenu } from "./admin-mobile-menu";
 export function AdminNav({ role }: { role: "admin" | "super_admin" }) {
   const links = (
     <>
@@ -79,15 +78,7 @@ export function AdminNav({ role }: { role: "admin" | "super_admin" }) {
           </ConfirmSubmitButton>
         </form>
       </div>
-      <details className="admin-mobile-menu">
-        <CloseMenuOnNavigation />
-        <summary>
-          <Brand />
-          <span>
-            <Menu />
-            メニュー
-          </span>
-        </summary>
+      <AdminMobileMenu>
         <nav>{links}</nav>
         <form action={logout} className="mobile-logout-form">
           <ConfirmSubmitButton message="ログアウトしますか？">
@@ -95,7 +86,7 @@ export function AdminNav({ role }: { role: "admin" | "super_admin" }) {
             ログアウト
           </ConfirmSubmitButton>
         </form>
-      </details>
+      </AdminMobileMenu>
     </aside>
   );
 }
