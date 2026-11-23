@@ -8,23 +8,52 @@ if (
 ) {
   throw new Error("Requires isolated local fortylove_chatbot_test database");
 }
+const corpus = Number(process.argv[2] ?? 1000);
+if (![200, 1000, 5000, 10000].includes(corpus)) throw new Error("Use 200, 1000, 5000, or 10000 rows");
 const sql = `begin;
-insert into chatbot_knowledge(title,content,category,keywords,source_type,source_name,embedding)
-select '合成資料の質問'||i,repeat('これは検索性能検証用の合成本文です。',30),'試験',array['合成資料'],
-'markdown','benchmark-only.md',array_fill(0.1::real,array[768]) from generate_series(1,1000) i;
-create temporary table benchmark_samples(ms double precision,payload_bytes integer,candidates integer) on commit drop;
-do $$ declare started timestamptz; result jsonb; begin
-  for i in 1..21 loop
-    started := clock_timestamp();
-    result := search_chatbot_knowledge(array['benchmark-only.md'],'合成資料の質問42',array_fill(0.1::real,array[768]));
-    if i>1 then insert into benchmark_samples values(extract(epoch from clock_timestamp()-started)*1000,octet_length(result::text),jsonb_array_length(result)); end if;
+insert into chatbot_knowledge(id,title,content,category,keywords,source_type,source_name,embedding,updated_at)
+select md5('benchmark-chatbot-'||i)::uuid,
+  case when i%2=0 then '参加費の案内' else 'テニス練習' end || i,
+  repeat('要項と集合場所を確認してください。項目'||i||'。',35),'試験',
+  case when i%2=0 then array['参加費','当日'] else array['練習','コート'] end,
+  'markdown','benchmark-only.md',
+  array(select (case when i%2=0 then -1 else 1 end * (0.05+(i*v%113)*0.001))::real
+        from generate_series(1,768) v), timestamp '2026-11-23'
+from generate_series(1,${corpus}) i;
+create temporary table benchmark_samples(
+  mode text, ms double precision, payload_bytes integer, candidates integer, fingerprint text
+) on commit drop;
+do $$ declare mode text; started timestamptz; result jsonb; elapsed double precision;
+  query_vector real[] := array_fill(0.1::real,array[768]);
+begin
+  foreach mode in array array['lexical','hybrid'] loop
+    for i in 1..17 loop
+      started := clock_timestamp();
+      result := search_chatbot_knowledge(array['benchmark-only.md'],'参加費の案内',
+        case when mode='hybrid' then query_vector end);
+      elapsed := extract(epoch from clock_timestamp()-started)*1000;
+      if i>2 then
+        insert into benchmark_samples values(mode,elapsed,octet_length(result::text),jsonb_array_length(result),
+          (select md5(string_agg(
+            (r - 'lexical_score' - 'semantic_score' ||
+              jsonb_build_object('lexical_score',round((r->>'lexical_score')::numeric,12),
+                'semantic_score',round((r->>'semantic_score')::numeric,12)))::text,
+            '|' order by r->>'source_kind',r->>'id'
+          )) from jsonb_array_elements(result) r));
+      end if;
+    end loop;
   end loop;
 end $$;
-select jsonb_build_object('corpus',1000,'samples',20,'databaseP95Ms',(select percentile_cont(0.95) within group(order by ms) from benchmark_samples),
- 'maxCandidates',(select max(candidates) from benchmark_samples),
- 'candidatePayloadBytes',(select max(payload_bytes) from benchmark_samples),
- 'previousFullCorpusPayloadBytes',(select octet_length(jsonb_agg(jsonb_build_object('id',id,'title',title,'content',content,'category',category,'keywords',keywords,'priority',priority,'is_active',is_active,'source_name',source_name))::text) from chatbot_knowledge where source_name='benchmark-only.md'),
- 'externalApiCalls',0,'measurement','local synthetic database only; excludes network and Gemini latency/cost');
+select jsonb_build_object('corpus',${corpus},'externalApiCalls',0,
+ 'measurement','local synthetic database only; excludes network and Gemini latency/cost',
+ 'modes',(select jsonb_object_agg(mode,to_jsonb(s)-'mode') from (
+   select mode,count(*) samples,min(ms) "minMs",
+     percentile_cont(0.5) within group(order by ms) "medianMs",
+     percentile_cont(0.95) within group(order by ms) "p95Ms",
+     max(candidates) "maxCandidates",max(payload_bytes) "payloadBytes",
+     array_agg(distinct fingerprint) fingerprints
+   from benchmark_samples group by mode
+ ) s));
 rollback;`;
 const output = execFileSync(
   process.env.PSQL_BIN || "psql",
@@ -37,11 +66,10 @@ const output = execFileSync(
   },
 );
 const report = JSON.parse(output.trim());
-if (
-  report.maxCandidates > 40 ||
-  report.candidatePayloadBytes >= report.previousFullCorpusPayloadBytes
-)
-  throw new Error("Retrieval transfer regression");
+if (report.modes.lexical.maxCandidates !== 20 || report.modes.hybrid.maxCandidates !== 40)
+  throw new Error("Expected independent, bounded lexical and semantic candidate lists");
+if (Object.values(report.modes).some((mode) => mode.fingerprints.length !== 1))
+  throw new Error("Non-deterministic search results");
 mkdirSync(".ops-reports", { recursive: true });
 writeFileSync(".ops-reports/chatbot-retrieval.json", JSON.stringify(report, null, 2) + "\n");
 console.log(JSON.stringify(report, null, 2));

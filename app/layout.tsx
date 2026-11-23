@@ -32,7 +32,6 @@ import "./styles/events/event-detail.css";
 import "./styles/events/responsive.css";
 import "./styles/loading.css";
 import { NavigationFeedback } from "@/components/navigation-feedback";
-import { ScrollToTop } from "@/components/scroll-to-top";
 
 export const metadata: Metadata = {
   title: "早大Fortylove",
@@ -45,7 +44,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <NavigationFeedback />
         {children}
-        <ScrollToTop />
       </body>
     </html>
   );

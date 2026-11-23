@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useId } from "react";
+import { type FormEvent, useId, useLayoutEffect } from "react";
 import { Bot, Send, ShieldCheck, X } from "lucide-react";
 import { ChatbotMessageView } from "./chatbot-message";
 import type { ChatbotMode } from "./types";
@@ -16,6 +16,21 @@ export function ChatbotPreview({ mode = "preview", onClose, active = true }: Cha
   const titleId = useId();
   const inputId = useId();
   const conversation = useChatbotConversation(mode, active);
+  const { inputRef, message } = conversation;
+
+  useLayoutEffect(() => {
+    const input = inputRef.current;
+    if (!input || !active) return;
+    function resize() {
+      if (!input) return;
+      input.style.height = "auto";
+      const borders = input.offsetHeight - input.clientHeight;
+      input.style.height = `${input.scrollHeight + borders}px`;
+    }
+    resize();
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, [active, inputRef, message]);
 
   async function send(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

@@ -1,18 +1,17 @@
 import { FormFeedback } from "@/components/form-feedback";
 import { MarkdownImporter } from "@/components/markdown-importer";
 import { DocumentHistory } from "@/components/chatbot/document-history";
+import { DeleteChatbotSourceForm } from "@/components/chatbot/delete-source-form";
 import { AccessSwitch } from "@/components/access-switch";
 import { Bot, Database, FileText, Mail, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import {
-  deleteChatbotMarkdownSource,
   updateChatbotAudienceAccess,
   updateChatbotAudienceSources,
   updateChatbotEscalationEmail,
 } from "@/app/server-actions/chatbot-actions";
 import { ChatbotPreview } from "@/components/chatbot-preview";
-import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { isMissingColumnError } from "@/lib/supabase-errors";
@@ -266,16 +265,7 @@ export default async function ChatbotAdmin({
                 </small>
               </span>
             </div>
-            <form action={deleteChatbotMarkdownSource}>
-              <FormFeedback />
-              <input type="hidden" name="source_name" value={source.name} />
-              <ConfirmSubmitButton
-                className="danger"
-                message={`「${source.name}」の原本・全版履歴・取り込んだ回答を削除しますか？`}
-              >
-                削除
-              </ConfirmSubmitButton>
-            </form>
+            <DeleteChatbotSourceForm source={source.name} />
             <DocumentHistory source={source.name} />
           </article>
         ))}
@@ -307,6 +297,9 @@ function errorMessage(error: string) {
     return "Markdown参照元を保存できませんでした。Vercel Logsで保存エラーをご確認ください。";
   if (error === "markdown-file") return "合計1MB以内のMarkdown（.md）ファイルを選択してください。";
   if (error === "markdown-empty") return "回答データとして取り込める文章がありませんでした。";
+  if (error === "markdown-source") return "削除するMarkdownのファイル名を確認できませんでした。";
+  if (error === "markdown-delete-migration")
+    return "Markdownの削除機能がデータベースにありません。20261102_chatbot_retrieval_versions.sql の適用状況をご確認ください。";
   if (error === "markdown-delete") return "Markdownの回答データを削除できませんでした。";
   return "Markdownを反映できませんでした。追加マイグレーションをご確認ください。";
 }

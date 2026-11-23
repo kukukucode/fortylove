@@ -77,9 +77,10 @@ export const chatbotAudienceAccessInputSchema = z.object({
   audience: audienceSchema,
   enabled: booleanFormValueSchema,
 });
+// Uploads persist File.name verbatim; spaces can be part of the source identity.
+export const markdownSourceNameSchema = z.string().min(1).max(255).refine((name) => name.trim() !== "");
 export const chatbotAudienceSourcesInputSchema = z.object({
   audience: audienceSchema,
-  source_names: z.array(trimmedText(1, 255)).max(50),
+  source_names: z.array(markdownSourceNameSchema).max(50),
 });
 export const escalationEmailSchema = z.union([z.literal(""), z.string().trim().email().max(254)]);
-export const markdownSourceNameSchema = trimmedText(1, 255);
