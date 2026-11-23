@@ -56,7 +56,8 @@ begin
 end $$;
 
 -- Direct FAQ updates also invoke the generated expressions.
--- Match Supabase's table grants in the plain PostgreSQL CI database.
+-- Match Supabase's RLS behavior and table grants for this transaction only.
+alter role service_role bypassrls;
 grant select,update on faqs to service_role;
 set local role service_role;
 update faqs set answer='サービス側から編集' where id=md5('search-test-faq')::uuid;
