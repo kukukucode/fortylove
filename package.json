@@ -21,10 +21,10 @@
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {
-    "@sentry/nextjs": "^11.12.0",
-    "@supabase/supabase-js": "^2.118.0",
+    "@sentry/nextjs": "^11.14.0",
+    "@supabase/supabase-js": "^2.119.1",
     "bcryptjs": "^3.0.2",
-    "lucide-react": "^1.63.0",
+    "lucide-react": "^1.75.0",
     "next": "15.5.28",
     "pdfjs-dist": "5.4.296",
     "react": "^19.3.1",
