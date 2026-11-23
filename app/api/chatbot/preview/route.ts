@@ -13,6 +13,7 @@ import {
   type ChatbotKnowledge,
 } from "@/lib/chatbot";
 import { generateGroundedAnswer } from "@/lib/gemini-chatbot";
+import { matchChatbotTopics, normalizeChatbotLookupText } from "@/lib/chatbot-keywords";
 
 import { readKnowledge } from "@/lib/server/knowledge-data";
 import { answerEvents } from "@/lib/server/chatbot-events";
@@ -27,12 +28,13 @@ const requestSchema = z.object({
   history: z.array(z.string().trim().min(1).max(500)).max(4).optional(),
 });
 
-function choiceResponse(records: ChatbotKnowledge[]) {
+function choiceResponse(records: ChatbotKnowledge[], generalTicket?: string) {
   const choices = records.slice(0, 3);
   return NextResponse.json({
-    answer: "質問に近い内容が複数あります。知りたいものを選んでください。",
+    answer: "質問に近い内容があります。知りたいものを選んでください。",
     source: "Markdown回答候補",
     kind: "choices",
+    generalTicket,
     choices: choices.map((record, index) => ({
       id: record.id,
       label: String(index + 1),
@@ -132,8 +134,9 @@ export async function POST(request: Request) {
     }
   }
   let knowledge: ChatbotKnowledge[];
+  const searchQuestion = input.data.choiceId ? question : normalizeChatbotLookupText(question);
   try {
-    knowledge = await readKnowledge(sourceNames, question, undefined, input.data.choiceId);
+    knowledge = await readKnowledge(sourceNames, searchQuestion, undefined, input.data.choiceId);
   } catch {
     return NextResponse.json(
       { error: "回答資料を確認できませんでした。時間をおいてお試しください。" },
@@ -165,7 +168,7 @@ export async function POST(request: Request) {
         maxAttempts: 1,
         requestTimeoutMs: 4_000,
       });
-      const candidates = await readKnowledge(sourceNames, question, vector);
+      const candidates = await readKnowledge(sourceNames, searchQuestion, vector);
       decision = decideKnowledgeResponse(question, candidates);
     } catch {
       /* Keyword retrieval remains available when the embedding service is unavailable. */
@@ -179,6 +182,7 @@ export async function POST(request: Request) {
       kind: "knowledge",
     });
   }
+  let choices: ChatbotKnowledge[] = [];
   if (decision.kind === "synthesize") {
     const synthesized = await generateGroundedAnswer(question, decision.records, { audience });
     if (synthesized) {
@@ -189,21 +193,29 @@ export async function POST(request: Request) {
         kind: "gemini",
       });
     }
-    if (decision.records.length > 1) return choiceResponse(decision.records);
-    return NextResponse.json({
-      answer:
-        "関連しそうな資料はありますが、質問を特定できませんでした。知りたい内容をもう少し具体的に入力してください。",
-      source: "Markdown回答候補",
-      kind: "fallback",
-    });
+    if (decision.records.length > 1) {
+      choices = matchChatbotTopics(question, decision.records);
+    }
   }
 
+  const originalQuestion = input.data.message;
+  const generalTicket =
+    allowsGeneralAnswer(originalQuestion) && allowsGeneralAnswer(question)
+      ? issueGeneralTicket(session.id, audience, originalQuestion)
+      : undefined;
+  if (choices.length) return choiceResponse(choices, generalTicket);
+
+  const hasCandidates = decision.kind === "synthesize";
+  const answer = hasCandidates
+    ? generalTicket
+      ? "資料をもとにした回答が得られませんでした。「一般的な回答を見る」から質問できます。"
+      : "関連しそうな資料はありますが、質問を特定できませんでした。知りたい内容をもう少し具体的に入力してください。"
+    : "資料には記載がありません。必要であれば運営スタッフへ確認できます。";
   return NextResponse.json({
-    answer: "資料には記載がありません。必要であれば運営スタッフへ確認できます。",
+    answer,
+    source: hasCandidates ? "Markdown回答候補" : undefined,
     kind: "fallback",
-    offerEscalation: true,
-    ...(allowsGeneralAnswer(question)
-      ? { generalTicket: issueGeneralTicket(session.id, audience, input.data.message) }
-      : {}),
+    offerEscalation: hasCandidates ? undefined : true,
+    generalTicket,
   });
 }

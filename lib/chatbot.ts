@@ -1,3 +1,5 @@
+import { findChatbotKeywordAnswer, matchChatbotTopics, normalizeChatbotLookupText } from "./chatbot-keywords";
+
 export type ChatbotKnowledge = {
   id: string;
   title: string;
@@ -77,6 +79,8 @@ export function rankKnowledgeAnswers(
   semanticScores: Record<string, number> = {},
 ): RankedKnowledge[] {
   const normalized = normalizeChatText(question);
+  const lookupQuestion = normalizeChatbotLookupText(question);
+  const normalizedLookup = normalizeChatText(lookupQuestion);
   // Same-topic FAQ is authoritative; otherwise prefer the newest revision.
   const topics = new Map<string, ChatbotKnowledge>();
   for (const record of records.filter((item) => item.is_active)) {
@@ -92,11 +96,11 @@ export function rankKnowledgeAnswers(
   }
   const candidates = [...topics.values()]
     .map((record) => {
-      const keywordHits = record.keywords.filter(
-        (word) =>
-          normalizeChatText(word).length >= 2 && normalized.includes(normalizeChatText(word)),
-      ).length;
-      const similarity = diceSimilarity(question, record.title);
+      const keywordHits = record.keywords.filter((word) => {
+        const keyword = normalizeChatText(normalizeChatbotLookupText(word));
+        return keyword.length >= 2 && normalizedLookup.includes(keyword);
+      }).length;
+      const similarity = diceSimilarity(lookupQuestion, normalizeChatbotLookupText(record.title));
       const semantic = semanticScores[record.id] ?? record.semantic_score ?? 0;
       const exact = normalized === normalizeChatText(record.title);
       // One common word is a candidate, never sufficient evidence for a direct answer.
@@ -145,19 +149,26 @@ export function decideKnowledgeResponse(
   records: ChatbotKnowledge[],
   semanticScores: Record<string, number> = {},
 ): KnowledgeDecision {
+  const ranked = rankKnowledgeAnswers(question, records, semanticScores).map((item) => item.record);
+  const best = ranked[0];
+  if (!best) return { kind: "none" };
+  if (normalizeChatText(question) === normalizeChatText(best.title))
+    return { kind: "direct", record: best };
+
+  const entry = findChatbotKeywordAnswer(question, ranked);
+  if (entry) return { kind: "direct", record: entry };
+
+  const topical = matchChatbotTopics(question, ranked);
+  const topicalSet = new Set(topical);
+  const candidates = [...topical, ...ranked.filter((record) => !topicalSet.has(record))];
   const seen = new Set<string>();
-  const ranked = rankKnowledgeAnswers(question, records, semanticScores).filter(({ record }) => {
+  const distinct = candidates.filter((record) => {
     const key = record.content.normalize("NFKC").replace(/\s+/g, " ").trim();
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
-  const best = ranked[0];
-  if (!best) return { kind: "none" };
-  // Similarity establishes relevance. Only an exact title match answers directly.
-  if (normalizeChatText(question) === normalizeChatText(best.record.title))
-    return { kind: "direct", record: best.record };
-  return { kind: "synthesize", records: ranked.slice(0, 3).map((item) => item.record) };
+  return { kind: "synthesize", records: distinct.slice(0, 3) };
 }
 
 export function knowledgeSource(record: ChatbotKnowledge) {
@@ -274,6 +285,7 @@ export function allowsGeneralAnswer(question: string) {
     )
   )
     return false;
+  if (/ボール/.test(q) && /表面|毛羽|けば|フェルト|素材|構造|中身/.test(q)) return true;
   return /テニスのルール|テニスの得点|ラケットの選び方|テニスの持ち物|テニス用語|サーブの練習|フォアハンド|バックハンド|勉強と部活の両立/.test(
     q,
   );
