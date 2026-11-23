@@ -190,6 +190,21 @@ it("本人の一般回答ボタンからだけ生成し回数に含める", asyn
     (await POST(request({ message: "ラケットの選び方", generalTicket: "forged" }))).status,
   ).toBe(400);
 });
+it.each(["member", "super_admin"])("一般回答のGemini診断は最高管理者だけに表示する（%s）", async (role) => {
+  const message = "ボールの表面はなぜ毛羽立つの？";
+  const diagnostic = "Gemini APIの利用枠に達しました（HTTP 429）。";
+  mocks.session.mockResolvedValue({ id: "test-user", role });
+  mocks.generate.mockImplementation(async (_message, _records, options) => {
+    options.onFailure?.(diagnostic);
+    return null;
+  });
+  const generalTicket = issueGeneralTicket("test-user", "member", message);
+  const response = await POST(request({ message, generalTicket }));
+  const data = await response.json();
+  expect(data.kind).toBe("general");
+  expect(data.offerEscalation).toBe(true);
+  expect(data.answer.includes(diagnostic)).toBe(role === "super_admin");
+});
 it("イベント質問は資料や生成処理に流さない", async () => {
   mocks.events.mockResolvedValue("予定は登録されていません。");
   await POST(request({ message: "次の練習はいつ" }));

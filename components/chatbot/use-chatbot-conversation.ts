@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { ChatbotChoice, ChatbotMessage, ChatbotMode, ChatbotResponse } from "./types";
+import { GENERAL_ANSWER_LABEL, type ChatbotMessage, type ChatbotMode, type ChatbotResponse } from "./types";
 
 function initialMessage(mode: ChatbotMode): ChatbotMessage {
   return {
@@ -7,8 +7,12 @@ function initialMessage(mode: ChatbotMode): ChatbotMessage {
     text:
       mode === "preview"
         ? "動作確認用チャットです。公開設定に関係なくいつでもテストできます。"
-        : "Fortyloveについて知りたいことを質問してください。",
+        : "こんにちは！ Fortyloveについて気になることがあれば、気軽に聞いてくださいね。",
   };
+}
+
+function clearChoiceMenu(item: ChatbotMessage) {
+  return item.choices?.length ? { ...item, choices: undefined, generalTicket: undefined } : item;
 }
 
 export function useChatbotConversation(mode: ChatbotMode, active: boolean) {
@@ -19,9 +23,13 @@ export function useChatbotConversation(mode: ChatbotMode, active: boolean) {
   const [testAudience, setTestAudience] = useState<"admin" | "member">("member");
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<ChatbotMessage[]>([initialMessage(mode)]);
-  const [pendingChoices, setPendingChoices] = useState<ChatbotChoice[]>([]);
   const [sending, setSending] = useState(false);
   const [escalating, setEscalating] = useState(false);
+  const latest = messages.at(-1);
+  const pendingChoices = latest?.choices ?? [];
+  const choiceCount = pendingChoices.length
+    ? pendingChoices.length + (latest?.generalTicket ? 2 : 1)
+    : 0;
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -60,10 +68,9 @@ export function useChatbotConversation(mode: ChatbotMode, active: boolean) {
     if (!displayText.trim() || requestLock.current) return;
     requestLock.current = true;
     setMessages((current) => [
-      ...current.map((item) => (item.choices ? { ...item, choices: undefined } : item)),
+      ...current.map(clearChoiceMenu),
       { role: "user", text: displayText, question: requestMessage },
     ]);
-    setPendingChoices([]);
     setMessage("");
     setSending(true);
     try {
@@ -82,8 +89,6 @@ export function useChatbotConversation(mode: ChatbotMode, active: boolean) {
         }),
       });
       const result = (await response.json()) as ChatbotResponse;
-      const choices = result.choices ?? [];
-      setPendingChoices(choices);
       setMessages((current) => [
         ...current,
         {
@@ -93,7 +98,7 @@ export function useChatbotConversation(mode: ChatbotMode, active: boolean) {
           generalTicket: result.generalTicket,
           offerEscalation: result.offerEscalation,
           question: requestMessage,
-          choices,
+          choices: result.choices,
         },
       ]);
     } catch {
@@ -109,20 +114,33 @@ export function useChatbotConversation(mode: ChatbotMode, active: boolean) {
 
   async function submitMessage() {
     const value = message.trim();
-    const selected = /^\d$/.test(value) ? pendingChoices[Number(value) - 1] : undefined;
-    if (pendingChoices.length && Number(value) === pendingChoices.length + 1) {
+    const normalized = value.normalize("NFKC");
+    const number = /^\d$/.test(normalized) ? Number(normalized) : 0;
+    if (pendingChoices.length && number === pendingChoices.length + 1) {
       chooseOther();
       return;
     }
+    if (pendingChoices.length && latest?.generalTicket && number === choiceCount) {
+      await requestGeneralAnswer(latest);
+      return;
+    }
+    const selected = pendingChoices[number - 1];
     await requestAnswer(value, selected?.title ?? value, selected?.id);
   }
 
+  async function requestGeneralAnswer(item: ChatbotMessage) {
+    if (!item.question || !item.generalTicket) return;
+    const label = item.choices?.length
+      ? `${item.choices.length + 2}. ${GENERAL_ANSWER_LABEL}`
+      : `${GENERAL_ANSWER_LABEL}を見る`;
+    await requestAnswer(label, item.question, undefined, item.generalTicket);
+  }
+
   function chooseOther() {
-    setPendingChoices([]);
     setMessage("");
     setMessages((current) => [
-      ...current.map((item) => (item.choices ? { ...item, choices: undefined } : item)),
-      { role: "bot", text: "知りたい内容をもう少し具体的に入力してください。" },
+      ...current.map(clearChoiceMenu),
+      { role: "bot", text: "知りたいことを、もう少し詳しく聞かせてもらえますか？" },
     ]);
     requestAnimationFrame(() => inputRef.current?.focus());
   }
@@ -169,7 +187,6 @@ export function useChatbotConversation(mode: ChatbotMode, active: boolean) {
     setTestAudience(audience);
     setMessage("");
     const previous = history.current[audience];
-    setPendingChoices(previous?.at(-1)?.choices ?? []);
     setMessages(
       previous ?? [
         {
@@ -187,10 +204,11 @@ export function useChatbotConversation(mode: ChatbotMode, active: boolean) {
     message,
     setMessage,
     messages,
-    pendingChoices,
+    choiceCount,
     sending,
     escalating,
     requestAnswer,
+    requestGeneralAnswer,
     submitMessage,
     chooseOther,
     requestEscalation,

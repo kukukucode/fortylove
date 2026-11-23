@@ -105,14 +105,7 @@ export function ChatbotPreview({ mode = "preview", onClose, active = true }: Cha
               )
             }
             onChooseOther={conversation.chooseOther}
-            onGeneralAnswer={(selectedMessage) =>
-              conversation.requestAnswer(
-                "一般的な回答を見る",
-                selectedMessage.question,
-                undefined,
-                selectedMessage.generalTicket,
-              )
-            }
+            onGeneralAnswer={conversation.requestGeneralAnswer}
             onEscalate={conversation.requestEscalation}
             onDecline={conversation.declineEscalation}
           />
@@ -134,8 +127,8 @@ export function ChatbotPreview({ mode = "preview", onClose, active = true }: Cha
           onChange={(event) => conversation.setMessage(event.target.value)}
           maxLength={500}
           placeholder={
-            conversation.pendingChoices.length
-              ? `1〜${conversation.pendingChoices.length + 1}から選択、または質問を入力`
+            conversation.choiceCount
+              ? `1〜${conversation.choiceCount}から選択、または質問を入力`
               : "例：次の新歓はいつ？"
           }
           rows={1}

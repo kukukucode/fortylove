@@ -31,7 +31,7 @@ const requestSchema = z.object({
 function choiceResponse(records: ChatbotKnowledge[], generalTicket?: string) {
   const choices = records.slice(0, 3);
   return NextResponse.json({
-    answer: "質問に近い内容があります。知りたいものを選んでください。",
+    answer: "質問に近い内容が見つかりました。気になるものを選んでくださいね。",
     source: "Markdown回答候補",
     kind: "choices",
     generalTicket,
@@ -108,14 +108,20 @@ export async function POST(request: Request) {
   }
 
   if (input.data.generalTicket) {
+    let diagnostic: string | undefined;
     const answer = await generateGroundedAnswer(input.data.message, [], {
       general: true,
       audience,
+      ...(role === "super_admin"
+        ? { onFailure: (reason: string) => {
+            diagnostic = reason;
+          } }
+        : {}),
     });
     return NextResponse.json({
       answer: answer
         ? `Fortyloveの公式回答ではありません。一般的な参考情報です。\n\n${answer}`
-        : "一般的な回答を取得できませんでした。運営スタッフにご相談ください。",
+        : `一般的な回答を取得できませんでした。${diagnostic ?? "運営スタッフにご相談ください。"}`,
       kind: "general",
       offerEscalation: !answer,
     });
@@ -208,9 +214,9 @@ export async function POST(request: Request) {
   const hasCandidates = decision.kind === "synthesize";
   const answer = hasCandidates
     ? generalTicket
-      ? "資料をもとにした回答が得られませんでした。「一般的な回答を見る」から質問できます。"
-      : "関連しそうな資料はありますが、質問を特定できませんでした。知りたい内容をもう少し具体的に入力してください。"
-    : "資料には記載がありません。必要であれば運営スタッフへ確認できます。";
+      ? "資料からは答えが見つかりませんでした。よければ「一般的な回答を見る」から、参考情報を確認できます。"
+      : "近そうな資料は見つかりました。知りたいことを、もう少し詳しく聞かせてもらえますか？"
+    : "その質問については、資料から確認できませんでした。よければ、運営スタッフに聞くこともできます。";
   return NextResponse.json({
     answer,
     source: hasCandidates ? "Markdown回答候補" : undefined,

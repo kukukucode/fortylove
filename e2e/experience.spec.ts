@@ -209,6 +209,53 @@ test("一般利用画面は内部情報を隠し、一般回答は押下後の�
   await expect(dialog.getByText(/外部AIサービスを利用する場合/)).toBeVisible();
 });
 
+test("一般回答はその他の次の番号をタップまたは入力して選べる", async ({ page }) => {
+  const question = "ボールの表面はなぜ毛羽立つの？";
+  const generalRequests: unknown[] = [];
+  await page.route("**/api/chatbot/preview", async (route) => {
+    const body = route.request().postDataJSON();
+    if (body.generalTicket) {
+      generalRequests.push(body);
+      await route.fulfill({ json: { answer: "フェルトが飛び方に影響します。" } });
+      return;
+    }
+    await route.fulfill({ json: {
+      answer: "質問に近い内容があります。",
+      choices: [
+        { id: "00000000-0000-4000-8000-000000000001", label: "1", title: "ボール代" },
+        { id: "00000000-0000-4000-8000-000000000002", label: "2", title: "ボールの持参" },
+      ],
+      generalTicket: "test-only-ticket",
+    } });
+  });
+  await page.goto("/admin/faqs");
+  await page.getByRole("button", { name: "チャットを開く" }).click();
+  const dialog = page.getByRole("dialog");
+  const input = dialog.getByRole("textbox", { name: "質問", exact: true });
+  const answers = dialog.getByText("フェルトが飛び方に影響します。", { exact: true });
+  const general = dialog.getByRole("button", { name: "4. 一般的な回答", exact: true });
+
+  for (const method of ["button", "number"]) {
+    await input.fill(question);
+    await input.press("Enter");
+    await expect(dialog.getByRole("button", { name: "3. その他", exact: true })).toBeVisible();
+    await expect(general).toBeVisible();
+    await expect(input).toHaveAttribute("placeholder", /1〜4/);
+    if (method === "button") {
+      await general.click();
+    } else {
+      await input.fill("４");
+      await input.press("Enter");
+    }
+    await expect(answers).toHaveCount(method === "button" ? 1 : 2);
+    await expect(general).toHaveCount(0);
+  }
+  expect(generalRequests).toEqual([
+    expect.objectContaining({ message: question, generalTicket: "test-only-ticket" }),
+    expect.objectContaining({ message: question, generalTicket: "test-only-ticket" }),
+  ]);
+});
+
 test("画面遷移中は進行表示が出て完了後に消える", async ({ page, context }) => {
   await useExperienceSession(context, "20000000-0000-4000-8000-000000000002");
   await page.goto("/home");
