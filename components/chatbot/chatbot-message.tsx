@@ -29,7 +29,6 @@ export function ChatbotMessageView({
   return (
     <div className={`chat-message ${item.role}`}>
       <p>{item.text}</p>
-      {mode === "preview" && item.source && <small>根拠：{item.source}</small>}
       {!!item.choices?.length && (
         <div className="chatbot-choice-list" aria-label="回答候補">
           {item.choices.map((choice) => (
