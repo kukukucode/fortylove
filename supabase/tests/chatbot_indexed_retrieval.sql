@@ -22,6 +22,13 @@ from (
       array_fill(0.1::real, array[768]))
 ) fixtures(fixture, title, content, keywords, source_name, active, embedding);
 
+insert into public.chatbot_knowledge
+  (id, title, content, category, keywords, source_type, source_name, embedding)
+select md5('indexed-private-decoy-' || item)::uuid, '非公開の会計 ' || item,
+  '許可されていない資料です。', '検索テスト', array['入会費'], 'markdown', 'indexed-admin.md',
+  array_fill(0.1::real, array[768])
+from generate_series(1, 85) item;
+
 insert into public.faqs(id, question, answer, category, is_published, embedding)
 values
   (md5('indexed-faq')::uuid, '入会費はいくらですか', '公式の入会費です。', '検索テスト', true,
@@ -56,7 +63,7 @@ begin
   end if;
   if exists (
     select from jsonb_array_elements(results) e
-    where (e->>'lexical_score')::numeric <> 0 or e->>'id' in (
+    where (e->>'lexical_score')::numeric <> 0 or e->>'source_name' = 'indexed-admin.md' or e->>'id' in (
       md5('indexed-retrieval-private')::uuid::text,
       md5('indexed-retrieval-inactive')::uuid::text,
       md5('indexed-draft')::uuid::text
@@ -77,7 +84,9 @@ begin
     or jsonb_array_length(public.search_chatbot_candidates(sources, 'ラケット')) <> 1
   then raise exception 'Invalid embedding should remove only the vector candidate';
   end if;
-  if has_function_privilege('public', 'public.search_chatbot_candidates(text[],text,real[],uuid)', 'execute') then
+  if has_function_privilege('public', 'public.search_chatbot_candidates(text[],text,real[],uuid)', 'execute')
+    or has_function_privilege('public', 'public.chatbot_nearest_candidates(text[],vector)', 'execute')
+  then
     raise exception 'Public access to indexed retrieval RPC';
   end if;
   if (select count(*) from pg_index i join pg_class c on c.oid = i.indexrelid
@@ -88,6 +97,8 @@ begin
 end;
 $$;
 
+-- Mirror the production service role inside this rolled-back test transaction.
+alter role service_role bypassrls;
 grant select, update on public.faqs to service_role;
 set local role service_role;
 update public.faqs set answer = '公式の新しい回答です。', embedding = array_fill(0.15::real, array[768])

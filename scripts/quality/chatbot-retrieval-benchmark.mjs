@@ -10,7 +10,9 @@ if (
 }
 const corpus = Number(process.argv[2] ?? 1000);
 if (![200, 1000, 5000, 10000].includes(corpus)) throw new Error("Use 200, 1000, 5000, or 10000 rows");
-const sql = `begin;
+// Remove dead entries from previous rolled-back runs before inserting fixtures.
+const sql = `vacuum (analyze) public.chatbot_knowledge;
+begin;
 set local search_path = public, extensions, pg_temp;
 insert into chatbot_knowledge(id,title,content,category,keywords,source_type,source_name,embedding,updated_at)
 select md5('benchmark-chatbot-'||i)::uuid,
@@ -83,12 +85,14 @@ const output = execFileSync(
   },
 );
 const report = JSON.parse(output.trim());
+mkdirSync(".ops-reports", { recursive: true });
+writeFileSync(".ops-reports/chatbot-retrieval.json", JSON.stringify(report, null, 2) + "\n");
+console.log(JSON.stringify(report, null, 2));
 if (report.modes.lexical.maxCandidates !== 20 || report.modes.hybrid.maxCandidates !== 40 ||
     report.modes.indexed_lexical.maxCandidates !== 20 || report.modes.indexed_semantic.maxCandidates !== 20)
   throw new Error("Expected independent, bounded lexical and semantic candidate lists");
 if (report.recallAt20 < 0.9) throw new Error("Recall@20 fell below 90% for the synthetic benchmark");
 if (Object.values(report.modes).some((mode) => mode.fingerprints.length !== 1))
   throw new Error("Non-deterministic search results");
-mkdirSync(".ops-reports", { recursive: true });
-writeFileSync(".ops-reports/chatbot-retrieval.json", JSON.stringify(report, null, 2) + "\n");
-console.log(JSON.stringify(report, null, 2));
+if (report.modes.lexical.fingerprints[0] !== report.modes.indexed_lexical.fingerprints[0])
+  throw new Error("Indexed lexical search changed the expected candidates or scores");

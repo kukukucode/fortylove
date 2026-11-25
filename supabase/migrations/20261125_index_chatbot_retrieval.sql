@@ -82,14 +82,37 @@ create index if not exists faqs_search_vector_hnsw
   on public.faqs using hnsw (search_vector vector_cosine_ops)
   where is_published and search_vector is not null;
 
+-- Prefer an ordered HNSW scan over a scan and sort. Other queries and the
+-- exact fallback retain their normal planner settings.
+create or replace function public.chatbot_nearest_candidates(p_sources text[], p_embedding vector)
+returns table(id uuid, kind text, priority integer, updated_at timestamptz, distance double precision)
+language sql stable
+set search_path = pg_catalog, public, extensions, pg_temp
+set enable_sort = off
+set hnsw.iterative_scan = strict_order
+set hnsw.ef_search = 240 as $$
+  (
+    select k.id, 'markdown'::text, k.priority, k.updated_at, k.search_vector <=> p_embedding
+    from public.chatbot_knowledge k
+    where cardinality(p_sources) > 0 and k.is_active and k.source_type = 'markdown'
+      and k.source_name = any(p_sources) and k.search_vector is not null
+    order by k.search_vector <=> p_embedding limit 60
+  )
+  union all
+  (
+    select f.id, 'faq'::text, 100, f.updated_at, f.search_vector <=> p_embedding
+    from public.faqs f
+    where f.is_published and f.search_vector is not null
+    order by f.search_vector <=> p_embedding limit 60
+  );
+$$;
+
 -- The app calls this RPC first with text, then only for semantic candidates if
 -- needed. The existing hybrid RPC stays available during rollout and rollback.
 create or replace function public.search_chatbot_candidates(
   p_sources text[], p_question text, p_query real[] default null, p_choice uuid default null
 ) returns jsonb language sql stable security definer
-set search_path = pg_catalog, public, extensions, pg_temp
-set hnsw.iterative_scan = strict_order
-set hnsw.ef_search = 80 as $$
+set search_path = pg_catalog, public, extensions, pg_temp as $$
   with input as materialized (
     select public.chatbot_normalize(p_question) as question,
       public.chatbot_search_vector(p_query) as embedding
@@ -125,42 +148,26 @@ set hnsw.ef_search = 80 as $$
   ), lexical as (
     select id, kind, score from lexical_ranked where score >= 0.38
     order by score desc, priority desc, updated_at desc, id, kind limit 20
-  ), markdown_near as materialized (
-    select k.* from input i cross join lateral (
-      select k.id, k.priority, k.updated_at, k.search_vector <=> i.embedding as distance
-      from public.chatbot_knowledge k
-      where i.embedding is not null and p_choice is null
-        and k.is_active and k.source_type = 'markdown'
-        and k.source_name = any(p_sources) and k.search_vector is not null
-      order by k.search_vector <=> i.embedding limit 60
-    ) k
-  ), markdown_semantic as (
-    select * from markdown_near
-    where exists (select 1 from markdown_near offset 19)
+  ), nearest as materialized (
+    select n.* from input i
+    cross join lateral public.chatbot_nearest_candidates(p_sources, i.embedding) n
+    where i.embedding is not null and p_choice is null
+  ), enough_markdown as (
+    select exists(select 1 from nearest where kind = 'markdown' offset 19) as enough
+  ), semantic_pool as (
+    select n.* from nearest n cross join enough_markdown e
+    where n.kind = 'faq' or e.enough
     union all
     -- A very selective source filter can exhaust the approximate scan early.
     -- Recheck only permitted rows so a sparse source still gets good coverage.
-    select k.id, k.priority, k.updated_at, k.search_vector <=> i.embedding
-    from input i cross join public.chatbot_knowledge k
+    select k.id, 'markdown', k.priority, k.updated_at, k.search_vector <=> i.embedding
+    from input i cross join public.chatbot_knowledge k cross join enough_markdown e
     where i.embedding is not null and p_choice is null
       and k.is_active and k.source_type = 'markdown'
       and k.source_name = any(p_sources) and k.search_vector is not null
-      and not exists (select 1 from markdown_near offset 19)
-  ), faq_semantic as (
-    select f.id, 100 as priority, f.updated_at, f.distance
-    from input i cross join lateral (
-      select f.id, f.updated_at, f.search_vector <=> i.embedding as distance
-      from public.faqs f
-      where i.embedding is not null and p_choice is null
-        and f.is_published and f.search_vector is not null
-      order by f.search_vector <=> i.embedding limit 60
-    ) f
-  ), all_semantic as (
-    select id, 'markdown'::text as kind, priority, updated_at, distance from markdown_semantic
-    union all
-    select id, 'faq', priority, updated_at, distance from faq_semantic
+      and not e.enough
   ), semantic as (
-    select id, kind, 1.0 - distance as score from all_semantic
+    select id, kind, 1.0 - distance as score from semantic_pool
     where distance <= 0.32
     order by distance, priority desc, updated_at desc, id, kind limit 20
   ), candidates as (
@@ -187,14 +194,15 @@ set hnsw.ef_search = 80 as $$
 $$;
 
 revoke all on function public.search_chatbot_candidates(text[], text, real[], uuid),
-  public.chatbot_search_vector(real[]), public.chatbot_bigrams(text), public.chatbot_index_bigrams(text, text, text[]) from public;
+  public.chatbot_nearest_candidates(text[], vector), public.chatbot_search_vector(real[]),
+  public.chatbot_bigrams(text), public.chatbot_index_bigrams(text, text, text[]) from public;
 
 do $$
 declare api_role text;
 begin
   foreach api_role in array array['anon', 'authenticated'] loop
     if exists (select 1 from pg_roles where rolname = api_role) then
-      execute format('revoke all on function public.search_chatbot_candidates(text[], text, real[], uuid), public.chatbot_search_vector(real[]), public.chatbot_bigrams(text), public.chatbot_index_bigrams(text, text, text[]) from %I', api_role);
+      execute format('revoke all on function public.search_chatbot_candidates(text[], text, real[], uuid), public.chatbot_nearest_candidates(text[], vector), public.chatbot_search_vector(real[]), public.chatbot_bigrams(text), public.chatbot_index_bigrams(text, text, text[]) from %I', api_role);
     end if;
   end loop;
 end;
