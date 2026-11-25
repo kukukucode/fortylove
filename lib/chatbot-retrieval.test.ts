@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   contextualizeQuestion,
   decideKnowledgeResponse,
+  mergeKnowledgeCandidates,
   rankKnowledgeAnswers,
   type ChatbotKnowledge,
 } from "./chatbot";
@@ -57,6 +58,23 @@ describe("根拠付き検索の回帰セット", () => {
       record("semantic", "C", { lexical_score: 0, semantic_score: 0.99 }),
     ]);
     expect(ranked[0].record.id).toBe("both");
+  });
+  it("同じ候補の字句スコアと意味スコアを統合する", () => {
+    const lexical = record("match", "会費", { lexical_score: 0.65 });
+    const semantic = { ...lexical, lexical_score: 0, semantic_score: 0.92 };
+    expect(mergeKnowledgeCandidates([lexical], [semantic])).toEqual([
+      { ...lexical, semantic_score: 0.92 },
+    ]);
+  });
+  it("複数の質問では同じ話題だけで根拠枠を埋めない", () => {
+    const repeated = ["1", "2", "3"].map((id) => record(id, "入会費 " + id, {
+      keywords: ["入会費"], lexical_score: 0.9,
+    }));
+    const practice = record("4", "練習頻度", { keywords: ["練習頻度"], lexical_score: 0.5 });
+    const result = decideKnowledgeResponse("入会費はいくら？練習頻度は？", [...repeated, practice]);
+    expect(result).toMatchObject({ kind: "synthesize", records: [
+      { id: "1" }, { id: "4" }, { id: "2" },
+    ] });
   });
   it("同じ質問のFAQを優先し古いMarkdownを根拠に混ぜない", () => {
     expect(

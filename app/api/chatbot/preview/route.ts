@@ -8,6 +8,7 @@ import {
   contextualizeQuestion,
   knowledgeSource,
   knowledgeCitation,
+  mergeKnowledgeCandidates,
   decideKnowledgeResponse,
   isEventQuestion,
   type ChatbotKnowledge,
@@ -175,7 +176,7 @@ export async function POST(request: Request) {
         requestTimeoutMs: 4_000,
       });
       const candidates = await readKnowledge(sourceNames, searchQuestion, vector);
-      decision = decideKnowledgeResponse(question, candidates);
+      decision = decideKnowledgeResponse(question, mergeKnowledgeCandidates(knowledge, candidates));
     } catch {
       /* Keyword retrieval remains available when the embedding service is unavailable. */
     }
