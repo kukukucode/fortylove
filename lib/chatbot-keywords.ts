@@ -82,9 +82,26 @@ export function matchChatbotTopics(question: string, records: ChatbotKnowledge[]
     .filter(({ terms }) => [...terms].some((term) => !broadTerms.has(term)));
 
   // Drop shorter matches to a topic while preserving other topics asked in the same question.
-  return supported
+  const distinct = supported
     .filter(({ terms }) => !supported.some(({ terms: other }) =>
       other.size > terms.size && [...terms].every((term) => other.has(term)),
-    ))
-    .map(({ record }) => record);
+    ));
+  const covered = new Set<string>();
+  const ranked: ChatbotKnowledge[] = [];
+  while (distinct.length) {
+    // Preserve the incoming rank on ties while favoring an uncovered topic.
+    let best = 0;
+    let bestCoverage = -1;
+    distinct.forEach(({ terms }, index) => {
+      const coverage = [...terms].filter((term) => !broadTerms.has(term) && !covered.has(term)).length;
+      if (coverage > bestCoverage) {
+        best = index;
+        bestCoverage = coverage;
+      }
+    });
+    const [{ record, terms }] = distinct.splice(best, 1);
+    ranked.push(record);
+    for (const term of terms) covered.add(term);
+  }
+  return ranked;
 }

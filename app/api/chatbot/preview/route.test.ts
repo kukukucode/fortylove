@@ -94,6 +94,23 @@ it("Geminiの回答を採用できなければ選択肢を返す", async () => {
     ],
   });
 });
+it("独立した字句候補と意味候補を両方とも回答の根拠に使う", async () => {
+  const vector = Array<number>(768).fill(0.1);
+  mocks.embed.mockResolvedValue([vector]);
+  mocks.read
+    .mockResolvedValueOnce([combinedQuestionCandidates[0]])
+    .mockResolvedValueOnce([{ ...combinedQuestionCandidates[1], lexical_score: 0, semantic_score: 0.91 }]);
+  mocks.generate.mockResolvedValue("入会金と練習頻度のご案内です。");
+
+  expect(await (await POST(request({ message: combinedQuestion }))).json()).toMatchObject({
+    kind: "gemini",
+  });
+  expect(mocks.read).toHaveBeenCalledTimes(2);
+  expect(mocks.read).toHaveBeenLastCalledWith(["member.md"], expect.any(String), vector);
+  expect(mocks.generate.mock.calls[0][1].map((candidate: { id: string }) => candidate.id)).toEqual([
+    "fee", "practice",
+  ]);
+});
 it("入会金は入会費として検索し、一意の項目の本文を返す", async () => {
   mocks.read.mockResolvedValue([
     { ...candidateBase, id: "fee", title: "入会費はいくらですか？", content: "5000円です。", keywords: ["入会費"] },

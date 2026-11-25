@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 10
     services:
       postgres:
-        image: postgres:17
+        image: pgvector/pgvector:0.8.7-pg17
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: fortylove_test
@@ -83,6 +83,10 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261123_optimize_chatbot_search.sql
       - if: steps.changes.outputs.database == 'true'
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/chatbot_search_optimization.sql
+      - if: steps.changes.outputs.database == 'true'
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261125_index_chatbot_retrieval.sql
+      - if: steps.changes.outputs.database == 'true'
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/chatbot_indexed_retrieval.sql
       - name: Prepare reservation concurrency test
         if: steps.changes.outputs.database == 'true'
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/reservation_concurrency_setup.sql
@@ -125,7 +129,7 @@ jobs:
     timeout-minutes: 25
     services:
       postgres:
-        image: postgres:17
+        image: pgvector/pgvector:0.8.7-pg17
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: fortylove_quality
@@ -182,6 +186,9 @@ jobs:
       - name: Create isolated test fixtures (missing setup fails CI)
         if: steps.changes.outputs.full_verify == 'true'
         run: pnpm test:quality:setup
+      - name: Enable indexed chatbot retrieval in the test database
+        if: steps.changes.outputs.full_verify == 'true'
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261125_index_chatbot_retrieval.sql
       - name: Install PostgreSQL 17 restore tools
         if: steps.changes.outputs.full_verify == 'true'
         run: |

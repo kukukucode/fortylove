@@ -73,6 +73,20 @@ export const KNOWLEDGE_THRESHOLDS = {
   semanticHigh: 0.88,
 };
 
+export function mergeKnowledgeCandidates(lexical: ChatbotKnowledge[], semantic: ChatbotKnowledge[]) {
+  const key = (record: ChatbotKnowledge) => `${record.source_kind ?? "markdown"}:${record.id}`;
+  const merged = new Map(lexical.map((record) => [key(record), record]));
+  for (const record of semantic) {
+    const id = key(record);
+    const previous = merged.get(id);
+    merged.set(id, {
+      ...record,
+      lexical_score: Math.max(previous?.lexical_score ?? 0, record.lexical_score ?? 0),
+    });
+  }
+  return [...merged.values()];
+}
+
 export function rankKnowledgeAnswers(
   question: string,
   records: ChatbotKnowledge[],
