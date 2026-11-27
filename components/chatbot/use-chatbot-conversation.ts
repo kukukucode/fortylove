@@ -6,8 +6,8 @@ function initialMessage(mode: ChatbotMode): ChatbotMessage {
     role: "bot",
     text:
       mode === "preview"
-        ? "動作確認用チャットです。公開設定に関係なくいつでもテストできます。"
-        : "こんにちは！ Fortyloveについて気になることがあれば、気軽に聞いてくださいね。",
+        ? "動作確認用チャットです！ 公開設定に関係なくいつでもテストできます。"
+        : "こんにちは！ Fortyloveについて気になることがあれば、気軽にご質問ください！",
   };
 }
 
