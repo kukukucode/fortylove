@@ -39,14 +39,19 @@ describe("Gemini grounded chatbot", () => {
     await expect(generateGroundedAnswer("質問", records, { config: { apiKey: "key" }, fetcher })).resolves.toBe("初心者も参加できます。");
   });
 
-  it("生成された依頼の文末から「ね」を外し、感嘆符は残す", async () => {
-    const result = "初心者も参加できます！ アプリから予約してくださいね！\n気軽にご参加くださいね";
+  it.each([
+    ["初心者も参加できますよ！", "初心者も参加できます！"],
+    ["集合は10時ですよ。", "集合は10時です。"],
+    ["受付は現地ですよね？", "受付は現地ですか？"],
+    ["アプリから予約してくださいね！\n気軽にご参加くださいね", "アプリから予約してください！\n気軽にご参加ください"],
+    ["案内には「参加できますよ」とあります。", "案内には「参加できますよ」とあります。"],
+  ])("生成された回答の丁寧な語尾を整える %s", async (result, expected) => {
     const fetcher = vi.fn().mockResolvedValue(Response.json({
       candidates: [{ content: { parts: [{ text: result }] } }],
     }));
     await expect(generateGroundedAnswer("参加方法を教えて", records, {
       config: { apiKey: "key" }, fetcher,
-    })).resolves.toBe("初心者も参加できます！ アプリから予約してください！\n気軽にご参加ください");
+    })).resolves.toBe(expected);
   });
 
   it("APIの失敗を機密情報を含まない診断に変換する", async () => {
