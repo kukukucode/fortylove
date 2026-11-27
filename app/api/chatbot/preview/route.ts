@@ -32,7 +32,7 @@ const requestSchema = z.object({
 function choiceResponse(records: ChatbotKnowledge[], generalTicket?: string) {
   const choices = records.slice(0, 3);
   return NextResponse.json({
-    answer: "質問に近い内容が見つかりました。気になるものを選んでくださいね。",
+    answer: "質問に近い内容が見つかりました！ 知りたい項目を選んでください。",
     source: "Markdown回答候補",
     kind: "choices",
     generalTicket,

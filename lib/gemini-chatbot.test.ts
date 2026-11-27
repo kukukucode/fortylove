@@ -15,6 +15,7 @@ describe("Gemini grounded chatbot", () => {
   it("一般回答も親しみのある文体で答え、サークル固有の情報は推測しない", () => {
     const prompt = buildGeneralPrompt("ボールの表面はなぜけば立っていますか？");
     expect(prompt).toContain("自然で親しみのある「です・ます」調");
+    expect(prompt).toContain("全角の「！」を1〜2箇所");
     expect(prompt).toContain("Fortyloveの会費・参加条件・日程・個人情報・運営判断は答えず");
   });
 
@@ -36,6 +37,16 @@ describe("Gemini grounded chatbot", () => {
   it("根拠に基づく応答を返す", async () => {
     const fetcher = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: "初心者も参加できます。" }] } }] }) });
     await expect(generateGroundedAnswer("質問", records, { config: { apiKey: "key" }, fetcher })).resolves.toBe("初心者も参加できます。");
+  });
+
+  it("生成された依頼の文末から「ね」を外し、感嘆符は残す", async () => {
+    const result = "初心者も参加できます！ アプリから予約してくださいね！\n気軽にご参加くださいね";
+    const fetcher = vi.fn().mockResolvedValue(Response.json({
+      candidates: [{ content: { parts: [{ text: result }] } }],
+    }));
+    await expect(generateGroundedAnswer("参加方法を教えて", records, {
+      config: { apiKey: "key" }, fetcher,
+    })).resolves.toBe("初心者も参加できます！ アプリから予約してください！\n気軽にご参加ください");
   });
 
   it("APIの失敗を機密情報を含まない診断に変換する", async () => {
